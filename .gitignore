@@ -1,2 +1,4 @@
 telescope_files/channel_to_channel_graph.csv
 telescope_files/Channel_Language.csv
+telescope_files/Source_Channel_Metadata.csv
+telescope_files/Temporal_Channel_Metadata.csv
