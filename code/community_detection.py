@@ -2,58 +2,31 @@
 Community detection analysis on the TeleScope dataset.
 Based on the Channel-to-Channel graph (CID).
 
-Generates CSV outputs and PNG charts with named communities.
+Minimal migration to igraph + Leiden, with GEXF export for Gephi.
 
-Fixes applied vs. previous version (see progress report §4):
-  - §4.3 Indexing bug in plot_top_communities / plot_community_graph:
-    labels now use the real Louvain community_id instead of the rank
-    in the size-sorted list.
-  - §4.4 NaN handling: missing/"nan" language values are filtered out
-    both when loading Channel_Language.csv and when aggregating, so
-    they never get counted as a valid dominant language ("NAN (100%)").
-  - §4.5 LANG_NAMES dictionary extended with languages observed in the
-    data that were missing (bg, et, ro, el, sv, da, fi, no, cs, sk, hu,
-    sr, hr, lt, lv, ka, az, kk, uz, ur, bn, ta, ml, my, km, lo, mn, si,
-    ps, ku, az).
-  - §4.6 Statistical reliability: a community is only named with a
-    language if at least MIN_KNOWN_FOR_NAME channels with a known
-    language are present in it; otherwise it is labelled
-    "Unknown (low confidence)" and the known/total ratio is reported
-    alongside the dominant share so small-sample names are visible as
-    such rather than looking as reliable as large ones.
+What changed vs. the NetworkX/Louvain version:
+  - The graph is loaded with igraph (faster, less memory on 261k nodes).
+  - Communities are detected with Leiden (leidenalg), which guarantees
+    connected communities — unlike Louvain.
+  - The community-level graph is no longer drawn with Matplotlib:
+    it is exported as a GEXF file to be opened in Gephi (ForceAtlas 2,
+    node size = channel count, edge width = inter-community links).
+  - All other outputs (CSV + README, Matplotlib charts) are unchanged.
 
-§4.2 (99.3% of channels in UNKNOWN communities) is a data-coverage
-issue, not a code bug: Channel_Language.csv only covers ~71k of the
-~261k channels in the graph. It is now addressed: load_source_metadata_titles
-extracts each channel's title/username from Source_Channel_Metadata.csv
-(534k rows, far more channels than Channel_Language.csv), and
-enrich_language_map_from_titles runs language detection (langdetect)
-on those titles to fill in ONLY the channels missing from
-Channel_Language.csv — Channel_Language.csv stays authoritative and is
-never overwritten, since a human/pipeline-verified language label is
-more trustworthy than a guess from a short channel title.
+What is kept from the previous version:
+  - §4.4 NaN handling in language metadata.
+  - §4.5 extended LANG_NAMES.
+  - §4.6 low-confidence naming with MIN_KNOWN_FOR_NAME.
+  - Title-based language enrichment via langdetect (§4.2).
+  - Each CSV in its own folder + README.
+  - Charts in charts/community_detection/.
 
-Requires: pip install langdetect
-
-§4.7 (graph converted to undirected before Louvain) is a deliberate,
-documented methodological choice, not a bug: Louvain requires an
-undirected graph. It is called out in the report since the project's
-theme concerns propagation dynamics, where edge direction matters.
-
-Readability changes (not bugs, requested separately):
-  - plot_degree_distribution now draws the CCDF (complementary
-    cumulative distribution) of the degree instead of a raw scatter
-    of degree vs. frequency: same log-log power-law reading, but a
-    smooth monotonic curve instead of a noisy point cloud.
-  - plot_community_graph now draws a community-level "meta-graph"
-    (one node per community, sized by channel count; edges weighted
-    by the real number of inter-community connections in the full
-    graph; force-directed layout) instead of a circular layout of
-    thousands of sampled individual channels, which tangled into an
-    unreadable mass of crossing edges regardless of sample size.
+Requires: pip install python-igraph leidenalg langdetect
 """
 
-import networkx as nx
+import igraph as ig
+import leidenalg as la
+import networkx as nx          # only for stats helper + GEXF export
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -69,14 +42,10 @@ import re
 COLORS = ["#2E5395", "#5B8DD9", "#85B09A", "#E8A33D", "#C0392B",
           "#8E44AD", "#16A085", "#D35400", "#2C3E50", "#7F8C8D"]
 
-# §4.6: minimum number of channels with a KNOWN language required
-# before a community is named after a dominant language rather than
-# flagged as low-confidence.
 MIN_KNOWN_FOR_NAME = 3
-
-# Values that mean "no language known" and must never be treated as
-# a real language (§4.4).
 NULL_LANG_VALUES = {"", "nan", "none", "null", "unknown", "nat"}
+
+PROGRAM_NAME = "community_detection"
 
 plt.rcParams.update({
     "font.family": "serif",
@@ -90,21 +59,22 @@ plt.rcParams.update({
 
 
 # ============================================================
-# 1. LOAD THE GRAPH
+# 1. LOAD THE GRAPH WITH IGRAPH
 # ============================================================
 
 def load_channel_graph(edgelist_path):
     """
-    Load the Channel-to-Channel graph using chunked reading (low memory).
+    Load the Channel-to-Channel graph with igraph.
 
-    Format:
-        msg_source_ch, msg_dest_ch, list_of_msg_source_ids
-        1375981076, 1000015666, "[5209, 5208, ...]"
+    igraph uses integer vertex indices internally, so we keep an
+    explicit mapping channel_id (str) <-> vertex index (int).
+    Returns (G, channel_ids) where channel_ids[i] is the original
+    channel ID of vertex i.
     """
-    print("[1/7] Loading the graph (chunked)...")
+    print("[1/7] Loading the graph with igraph (chunked)...")
 
-    G = nx.DiGraph()
-    chunk_size = 100_000
+    edges = []
+    seen = set()
     total_rows = 0
 
     for chunk in pd.read_csv(
@@ -113,18 +83,28 @@ def load_channel_graph(edgelist_path):
         header=0,
         usecols=["msg_source_ch", "msg_dest_ch"],
         dtype={"msg_source_ch": str, "msg_dest_ch": str},
-        chunksize=chunk_size,
+        chunksize=200_000,
         engine="c"
     ):
-        G.add_edges_from(zip(chunk["msg_source_ch"], chunk["msg_dest_ch"]))
+        for u, v in zip(chunk["msg_source_ch"], chunk["msg_dest_ch"]):
+            edges.append((u, v))
+            seen.add(u)
+            seen.add(v)
         total_rows += len(chunk)
         print(f"   -> Processed: {total_rows:,} rows...", end="\r")
 
     print()
+    channel_ids = sorted(seen)
+    id_to_idx = {cid: i for i, cid in enumerate(channel_ids)}
+
+    G = ig.Graph(directed=True)
+    G.add_vertices(len(channel_ids))
+    G.add_edges([(id_to_idx[u], id_to_idx[v]) for u, v in edges])
+
     print(f"   -> Total rows: {total_rows:,}")
-    print(f"   -> Nodes: {G.number_of_nodes():,}")
-    print(f"   -> Edges: {G.number_of_edges():,}")
-    return G
+    print(f"   -> Nodes: {G.vcount():,}")
+    print(f"   -> Edges: {G.ecount():,}")
+    return G, channel_ids
 
 
 # ============================================================
@@ -132,21 +112,21 @@ def load_channel_graph(edgelist_path):
 # ============================================================
 
 def compute_basic_stats(G):
-    """Compute basic statistics of the graph."""
+    """Compute basic statistics of the igraph graph."""
     print("[2/7] Computing statistics...")
 
-    if G.is_directed():
-        components = list(nx.weakly_connected_components(G))
-    else:
-        components = list(nx.connected_components(G))
+    # Weakly connected components (directed graph)
+    components = G.connected_components(mode="weak")
+    sizes = components.sizes()
 
+    degrees = G.degree()
     stats = {
-        "n_nodes": G.number_of_nodes(),
-        "n_edges": G.number_of_edges(),
-        "n_components": len(components),
-        "largest_component_size": max(len(c) for c in components) if components else 0,
-        "avg_degree": sum(dict(G.degree()).values()) / G.number_of_nodes(),
-        "density": nx.density(G)
+        "n_nodes": G.vcount(),
+        "n_edges": G.ecount(),
+        "n_components": len(sizes),
+        "largest_component_size": max(sizes) if sizes else 0,
+        "avg_degree": sum(degrees) / G.vcount(),
+        "density": G.density(),
     }
 
     for k, v in stats.items():
@@ -156,65 +136,66 @@ def compute_basic_stats(G):
 
 
 # ============================================================
-# 3. COMMUNITY DETECTION (LOUVAIN)
+# 3. COMMUNITY DETECTION (LEIDEN)
 # ============================================================
 
 def detect_communities(G, resolution=1.0, seed=42):
     """
-    Detect communities using the Louvain algorithm.
+    Detect communities with Leiden (leidenalg).
 
-    Returns a list of (community_id, node_set) tuples. Keeping the id
-    attached to the node set from this point on is what fixes §4.3:
-    every downstream function (naming, plotting) can look up the
-    right name for the right community instead of relying on
-    position-in-a-re-sorted-list, which silently drifts out of sync
-    with the original Louvain id as soon as anything gets sorted by
-    size.
+    Leiden guarantees connected communities, unlike Louvain.
+    It works on an undirected graph for the standard modularity
+    partition (same methodological choice as before for Louvain:
+    documented in the report, since the project's theme concerns
+    propagation dynamics where edge direction matters).
+
+    Returns a list of (community_id, set_of_channel_ids), using the
+    ORIGINAL channel IDs (not igraph indices) so the rest of the
+    pipeline is unchanged.
     """
-    print("[3/7] Detecting communities (Louvain)...")
+    print("[3/7] Detecting communities (Leiden)...")
 
-    G_undirected = G.to_undirected()
-
-    raw_communities = nx.community.louvain_communities(
-        G_undirected,
-        weight=None,
-        resolution=resolution,
-        seed=seed
+    G_und = G.as_undirected()
+    partition = la.find_partition(
+        G_und,
+        la.RBConfigurationVertexPartition,  # <-- Changement ici
+        resolution_parameter=resolution,
+        seed=seed,
     )
 
-    communities = list(enumerate(raw_communities))  # [(community_id, node_set), ...]
+    # Group igraph vertex indices by community
+    comm_to_indices = {}
+    for idx, comm_id in enumerate(partition.membership):
+        comm_to_indices.setdefault(comm_id, []).append(idx)
+
+    # Convert to channel IDs
+    communities = [
+        (comm_id, set(channel_ids[i] for i in indices))
+        for comm_id, indices in comm_to_indices.items()
+    ]
 
     print(f"   -> Communities detected: {len(communities)}")
-
-    sizes = sorted([len(c) for _, c in communities], reverse=True)
-    print(f"   -> Largest community: {sizes[0]:,} nodes")
-    print(f"   -> Smallest community: {sizes[-1]:,} nodes")
-    print(f"   -> Median size: {sizes[len(sizes)//2]:,} nodes")
+    sizes_sorted = sorted([len(c) for _, c in communities], reverse=True)
+    print(f"   -> Largest community: {sizes_sorted[0]:,} nodes")
+    print(f"   -> Smallest community: {sizes_sorted[-1]:,} nodes")
+    print(f"   -> Median size: {sizes_sorted[len(sizes_sorted)//2]:,} nodes")
 
     return communities
 
 
 # ============================================================
-# 4. LOAD LANGUAGE METADATA
+# 4. LOAD LANGUAGE METADATA (unchanged)
 # ============================================================
 
 def load_language_metadata(language_path):
     """Load channel language metadata from TeleScope CSV."""
     print("[4/7] Loading language metadata...")
 
-    df = pd.read_csv(
-        language_path,
-        sep="\t",        # fixed: file is tab-separated, not comma (§4.1, already fixed)
-        dtype=str,
-        index_col=0
-    )
-
+    df = pd.read_csv(language_path, sep="\t", dtype=str, index_col=0)
     print(f"   -> Columns: {list(df.columns)}")
 
-    # Rename columns to standard names (remove extra spaces)
     df.columns = [c.strip() for c in df.columns]
 
-    # Identify ID and language columns
     id_col = "File Names"
     lang_col = "detected_language"
 
@@ -222,8 +203,6 @@ def load_language_metadata(language_path):
         print(f"   -> ERROR: expected columns not found. Got: {list(df.columns)}")
         return {}
 
-    # Build the mapping, filtering out missing/placeholder language
-    # values at the source (§4.4) so "nan" never becomes a pseudo-language.
     language_map = {}
     skipped = 0
     for _, row in df.iterrows():
@@ -238,29 +217,15 @@ def load_language_metadata(language_path):
     print(f"   -> Channels with language info: {len(language_map):,}")
     if skipped:
         print(f"   -> Skipped {skipped:,} rows with missing/invalid language value")
-
-    sample = list(language_map.items())[:5]
-    print(f"   -> Sample: {sample}")
-
     return language_map
 
 
 # ============================================================
-# 4b. LOAD CHANNEL TITLES (Source_Channel_Metadata.csv)
+# 4b. LOAD CHANNEL TITLES (unchanged)
 # ============================================================
 
 def load_source_metadata_titles(path):
-    """
-    Extract a usable text label (title, falling back to username) for
-    each channel from Source_Channel_Metadata.csv.
-
-    Format: id, updated_utc, data
-        "2044316859", 1720798494, '{"_": "Channel", ..., "title": "INSIDER | News | Politics | USA", "username": "INSIDERR_POLITIC", ...}'
-
-    This file covers far more channels (~534k rows) than
-    Channel_Language.csv (~71k), which is why it is used to close the
-    coverage gap behind the 99.3% UNKNOWN communities (§4.2).
-    """
+    """Extract title/username per channel from Source_Channel_Metadata.csv."""
     print("[4b/8] Loading channel titles from Source_Channel_Metadata.csv...")
 
     titles = {}
@@ -292,30 +257,16 @@ def load_source_metadata_titles(path):
 
 
 # ============================================================
-# 4c. ENRICH LANGUAGE MAP FROM TITLES (langdetect)
+# 4c. ENRICH LANGUAGE MAP FROM TITLES (unchanged)
 # ============================================================
 
 def enrich_language_map_from_titles(language_map, titles,
                                     min_confidence=0.70, min_letters=4):
-    """
-    Fill gaps in language_map using language detection on each
-    channel's title/username (from Source_Channel_Metadata.csv).
-
-    Channel_Language.csv stays authoritative: any channel already in
-    language_map is left untouched here — only channels with NO known
-    language get a detected one. Detection on short titles is noisy,
-    so a candidate is only added when:
-      - the cleaned title has at least `min_letters` alphabetic
-        characters (very short titles like "USA" or emoji-only titles
-        are skipped rather than guessed at), and
-      - langdetect's top language has probability >= min_confidence.
-
-    Returns (updated language_map, number of channels added).
-    """
+    """Fill gaps in language_map using langdetect on channel titles."""
     try:
         from langdetect import detect_langs, DetectorFactory
         from langdetect.lang_detect_exception import LangDetectException
-        DetectorFactory.seed = 42  # deterministic results across runs
+        DetectorFactory.seed = 42
     except ImportError:
         print("   -> langdetect is not installed (pip install langdetect).")
         print("   -> Skipping title-based language enrichment.")
@@ -349,33 +300,17 @@ def enrich_language_map_from_titles(language_map, titles,
                   f"(added so far: {added:,})", end="\r")
 
     print()
-    print(f"   -> Added {added:,} channels via title-based language detection "
-          f"(min_confidence={min_confidence}, min_letters={min_letters})")
+    print(f"   -> Added {added:,} channels via title-based language detection")
     print(f"   -> language_map now covers {len(language_map):,} channels total")
     return language_map, added
 
 
 # ============================================================
-# 5. NAME COMMUNITIES
+# 5. NAME COMMUNITIES (unchanged)
 # ============================================================
 
 def name_communities(communities, language_map):
-    """
-    Assign a name to each community based on its dominant language.
-
-    communities: list of (community_id, node_set).
-
-    Only channels with a KNOWN language (present and valid in
-    language_map) are used to compute the dominant language and its
-    share (§4.4 — "Unknown" is never a candidate dominant language).
-
-    If fewer than MIN_KNOWN_FOR_NAME channels in a community have a
-    known language, the community is named "Unknown (low confidence)"
-    instead of a language with a misleadingly precise-looking
-    percentage computed from 1-2 data points (§4.6).
-
-    Returns a dict: community_id -> community_name
-    """
+    """Assign a name to each community based on its dominant language."""
     print("[5/7] Naming communities by dominant language...")
 
     LANG_NAMES = {
@@ -388,7 +323,6 @@ def name_communities(communities, language_map):
         "vi": "Vietnamese", "th": "Thai", "he": "Hebrew",
         "ha": "Hausa", "yo": "Yoruba", "ig": "Igbo",
         "am": "Amharic", "sw": "Swahili",
-        # §4.5: languages present in the data but previously missing
         "bg": "Bulgarian", "et": "Estonian", "ro": "Romanian",
         "el": "Greek", "sv": "Swedish", "da": "Danish",
         "fi": "Finnish", "no": "Norwegian", "cs": "Czech",
@@ -404,10 +338,7 @@ def name_communities(communities, language_map):
     community_names = {}
 
     for comm_id, nodes in communities:
-        known_languages = [
-            language_map[n] for n in nodes if n in language_map
-        ]
-
+        known_languages = [language_map[n] for n in nodes if n in language_map]
         n_known = len(known_languages)
         n_total = len(nodes)
 
@@ -415,7 +346,7 @@ def name_communities(communities, language_map):
             name = "Unknown (0 known)"
         elif n_known < MIN_KNOWN_FOR_NAME:
             lang_counts = Counter(known_languages)
-            dominant_lang, cnt = lang_counts.most_common(1)[0]
+            dominant_lang, _ = lang_counts.most_common(1)[0]
             readable = LANG_NAMES.get(dominant_lang, dominant_lang.upper())
             name = f"Unknown (low confidence: {readable}? n={n_known}/{n_total})"
         else:
@@ -427,7 +358,6 @@ def name_communities(communities, language_map):
 
         community_names[comm_id] = name
 
-    # Print top 10 by size, with correct ids (§4.3)
     top_by_size = sorted(communities, key=lambda cn: len(cn[1]), reverse=True)[:10]
     print("   -> Top 10 community names (by size):")
     for rank, (comm_id, nodes) in enumerate(top_by_size, start=1):
@@ -437,48 +367,111 @@ def name_communities(communities, language_map):
 
 
 # ============================================================
-# 6. EXPORT CSV RESULTS
+# 6. EXPORT CSV (unchanged: each CSV in its own folder + README)
 # ============================================================
 
+def export_csv_with_readme(df, output_path, title, description_lines):
+    """Export a DataFrame to CSV in its own folder, with a README.md."""
+    output_path = Path(output_path)
+    folder = output_path.parent / output_path.stem
+    folder.mkdir(parents=True, exist_ok=True)
+
+    csv_path = folder / output_path.name
+    df.to_csv(csv_path, index=False)
+
+    readme_path = folder / "README.md"
+    lines = [f"# {title}", ""]
+    lines += description_lines
+    lines += [
+        "",
+        "## File",
+        f"- `{output_path.name}` — {len(df):,} rows, {len(df.columns)} columns.",
+        "",
+        "## Columns",
+    ]
+    for col in df.columns:
+        dtype = str(df[col].dtype)
+        example = df[col].iloc[0] if len(df) else ""
+        lines.append(f"- `{col}` ({dtype}) — e.g. `{example}`")
+    lines.append("")
+
+    readme_path.write_text("\n".join(lines), encoding="utf-8")
+
+    print(f"   -> Exported: {csv_path} ({len(df):,} rows)")
+    print(f"   -> README:   {readme_path}")
+    return df
+
+
 def export_communities(communities, output_path):
-    """Export community assignments to CSV."""
+    """Export community assignments to CSV (with README)."""
     rows = []
     for comm_id, nodes in communities:
         for node in nodes:
             rows.append({"channel_id": node, "community_id": comm_id})
 
     df = pd.DataFrame(rows)
-    df.to_csv(output_path, index=False)
-    print(f"   -> Communities exported: {output_path} ({len(df):,} rows)")
-    return df
+    return export_csv_with_readme(
+        df, output_path,
+        title="Community assignments (channel -> community)",
+        description_lines=[
+            "One row per channel in the Channel-to-Channel graph.",
+            "",
+            "Each channel is assigned to exactly one Leiden community",
+            "(resolution=1.0, seed=42, on the undirected version of the graph).",
+            "",
+            "- `channel_id`: the channel's numeric ID (as a string).",
+            "- `community_id`: the Leiden community ID (integer).",
+        ],
+    )
 
 
 def export_community_sizes(communities, output_path):
-    """Export community sizes to CSV."""
+    """Export community sizes to CSV (with README)."""
     rows = [
         {"community_id": comm_id, "size": len(nodes)}
         for comm_id, nodes in communities
     ]
     df = pd.DataFrame(rows).sort_values("size", ascending=False)
-    df.to_csv(output_path, index=False)
-    print(f"   -> Sizes exported: {output_path}")
-    return df
+    return export_csv_with_readme(
+        df, output_path,
+        title="Community sizes",
+        description_lines=[
+            "One row per detected community, sorted by decreasing size.",
+            "",
+            "- `community_id`: the Leiden community ID.",
+            "- `size`: number of channels in that community.",
+        ],
+    )
 
 
 def export_community_names(community_names, output_path):
-    """Export community names to CSV."""
+    """Export community names to CSV (with README)."""
     rows = [
         {"community_id": k, "community_name": v}
         for k, v in community_names.items()
     ]
     df = pd.DataFrame(rows)
-    df.to_csv(output_path, index=False)
-    print(f"   -> Names exported: {output_path}")
-    return df
+    return export_csv_with_readme(
+        df, output_path,
+        title="Community names (dominant language)",
+        description_lines=[
+            "One row per community, giving its human-readable name.",
+            "",
+            "- `community_id`: the Leiden community ID.",
+            "- `community_name`: a label built from the dominant language",
+            "  among channels with a known language.",
+            "",
+            "Naming rules:",
+            f"- Fewer than {MIN_KNOWN_FOR_NAME} known-language channels:",
+            "  `Unknown (low confidence: <Lang>? n=known/total)`.",
+            "- Zero known-language channels: `Unknown (0 known)`.",
+            "- Otherwise: `<Language> (<share>%, n=known/total)`.",
+        ],
+    )
 
 
 # ============================================================
-# 7. GENERATE CHARTS (PNG)
+# 7. CHARTS (Matplotlib, unchanged except community graph)
 # ============================================================
 
 def plot_community_size_distribution(sizes, output_path):
@@ -498,14 +491,7 @@ def plot_community_size_distribution(sizes, output_path):
 
 
 def plot_top_communities(df_sizes, community_names, top_n, output_path):
-    """
-    Bar chart of the top N largest communities with names as labels.
-
-    Fixed (§4.3): takes df_sizes (which carries the real community_id
-    next to each size) instead of a bare sizes list, so the label for
-    each bar is looked up by the community's actual id, not by its
-    rank in the sorted list.
-    """
+    """Bar chart of the top N largest communities with names as labels."""
     print(f"[7/7] Generating top {top_n} communities chart...")
 
     top = df_sizes.head(top_n)
@@ -525,157 +511,54 @@ def plot_top_communities(df_sizes, community_names, top_n, output_path):
 
     for bar, val in zip(bars, top_sizes):
         ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height(),
-                f"{val:,}", ha="center", va="bottom", fontsize=7)
+                bar.get_height(), f"{val:,}",
+                ha="center", va="bottom", fontsize=7)
 
     fig.savefig(output_path)
     plt.close(fig)
     print(f"   -> Saved: {output_path}")
 
 
-def plot_degree_distribution(G, output_path):
-    """
-    CCDF (complementary cumulative distribution function) of the
-    degree distribution, log-log scale.
-
-    Replaces the previous raw scatter plot of degree vs. frequency,
-    which is standard in network science but hard to read without
-    practice (sparse, noisy cloud of points at high degree). The
-    CCDF — P(degree >= k) for each k — is monotonic and far smoother:
-    a straight line in log-log still indicates a power law, but the
-    curve itself is easy to follow even without specialist training.
-    """
+def plot_degree_distribution(G_ig, output_path):
+    """CCDF of the degree distribution, log-log scale."""
     print("[7/7] Generating degree distribution (CCDF) chart...")
 
-    degrees = np.array(sorted(d for _, d in G.degree() if d > 0))
+    degrees = np.array(sorted(d for d in G_ig.degree() if d > 0))
     n = len(degrees)
     unique_degrees = np.unique(degrees)
-    # number of nodes with degree >= k, for each unique k, via binary search
     idx = np.searchsorted(degrees, unique_degrees, side="left")
     ccdf = (n - idx) / n
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.loglog(unique_degrees, ccdf, "-", color=COLORS[2], linewidth=2)
     ax.set_xlabel("Degree k (log scale)")
-    ax.set_ylabel("P(Degree ≥ k)  (log scale)")
-    ax.set_title("Degree distribution — complementary CDF (log-log)")
+    ax.set_ylabel("P(Degree >= k)  (log scale)")
+    ax.set_title("Degree distribution - complementary CDF (log-log)")
     ax.grid(True, which="both", linestyle="--", alpha=0.4)
     fig.savefig(output_path)
     plt.close(fig)
     print(f"   -> Saved: {output_path}")
 
 
-def plot_community_graph(G, communities, community_names,
-                         top_n, output_path, min_inter_edges=1):
-    """
-    Community-level ("meta-graph") visualization: one node per
-    community instead of a sampled cloud of individual channels.
-
-    Replaces the previous node-link plot of thousands of sampled
-    channels on a circular layout, which for dense communities tends
-    to render as an unreadable tangle of crossing edges regardless of
-    sample size. Here:
-      - each node = one of the top_n largest communities, sized by
-        its total number of channels (not just the sampled subset),
-      - each edge = at least one real connection exists between those
-        two communities in the full graph, with edge width
-        proportional to how many such connections there are,
-      - layout is force-directed (spring_layout) rather than
-        circular, so strongly-linked communities are pulled together.
-
-    This shows the actual structure (which communities talk to which,
-    and how much) instead of a dense, uninterpretable sample of
-    individual edges.
-    """
-    print(f"[7/7] Generating community-level graph (top {top_n} communities)...")
-
-    sorted_comms = sorted(communities, key=lambda cn: len(cn[1]), reverse=True)[:top_n]
-    comm_id_order = [cid for cid, _ in sorted_comms]
-    sizes = {cid: len(nodes) for cid, nodes in sorted_comms}
-
-    node_to_comm = {}
-    for comm_id, nodes in sorted_comms:
-        for n in nodes:
-            node_to_comm[n] = comm_id
-
-    # Count real connections between the selected communities across
-    # the FULL graph (not a sample), so edge weights are exact.
-    edge_weights = Counter()
-    for u, v in G.edges():
-        cu, cv = node_to_comm.get(u), node_to_comm.get(v)
-        if cu is not None and cv is not None and cu != cv:
-            key = tuple(sorted((cu, cv)))
-            edge_weights[key] += 1
-
-    meta = nx.Graph()
-    for cid in comm_id_order:
-        meta.add_node(cid)
-    for (cu, cv), w in edge_weights.items():
-        if w >= min_inter_edges:
-            meta.add_edge(cu, cv, weight=w)
-
-    pos = nx.spring_layout(meta, seed=42, weight="weight", k=1.2)
-
-    max_size = max(sizes.values())
-    node_sizes = [max(300, 4000 * sizes[cid] / max_size) for cid in meta.nodes()]
-
-    color_for_id = {cid: COLORS[i % len(COLORS)] for i, cid in enumerate(comm_id_order)}
-    node_colors = [color_for_id[cid] for cid in meta.nodes()]
-
-    max_weight = max(edge_weights.values()) if edge_weights else 1
-    edge_widths = [0.5 + 5 * meta[u][v]["weight"] / max_weight for u, v in meta.edges()]
-
-    fig, ax = plt.subplots(figsize=(12, 10))
-    nx.draw_networkx_edges(meta, pos, width=edge_widths, alpha=0.5,
-                           edge_color="#999999", ax=ax)
-    nx.draw_networkx_nodes(meta, pos, node_size=node_sizes,
-                           node_color=node_colors, alpha=0.9, ax=ax)
-
-    # Wrap each label onto two short lines ("Language (share%)" / "n=known/total")
-    # instead of one long string, and disable clipping (clip_on=False) so a
-    # label near the edge of the plot is never cut off by the axes boundary —
-    # with savefig.bbox="tight" (set in rcParams) the saved figure expands to
-    # include the full text instead of truncating it.
-    def _wrap_label(name):
-        if ", n=" in name:
-            head, tail = name.split(", n=", 1)
-            return f"{head}\nn={tail}"
-        return name
-
-    labels = {cid: _wrap_label(community_names.get(cid, f"Community_{cid}"))
-              for cid in meta.nodes()}
-    nx.draw_networkx_labels(meta, pos, labels=labels, font_size=7.5, ax=ax,
-                            clip_on=False)
-
-    # Generous margins so node circles AND their wrapped text labels have
-    # room on every side, instead of sitting flush against the plot edge.
-    ax.margins(0.25, 0.25)
-
-    ax.set_title(f"Community-level graph (top {top_n}) — "
-                 "node size = channels, edge width = inter-community links")
-    ax.axis("off")
-    fig.savefig(output_path)
-    plt.close(fig)
-    print(f"   -> Saved: {output_path}")
-
-
 def plot_resolution_curve(G, resolutions, output_path):
-    """Plot number of communities vs. resolution parameter."""
+    """Plot number of communities vs. resolution (Leiden)."""
     print("[7/7] Generating resolution curve chart...")
 
+    G_und = G.as_undirected()
     n_comms = []
     for r in resolutions:
-        comms = nx.community.louvain_communities(
-            G.to_undirected(), weight=None, resolution=r, seed=42
+        p = la.find_partition(
+            G_und, la.RBConfigurationVertexPartition,
+            resolution_parameter=r, seed=42,
         )
-        n_comms.append(len(comms))
-        print(f"   -> Resolution {r}: {len(comms)} communities")
+        n_comms.append(len(set(p.membership)))
+        print(f"   -> Resolution {r}: {n_comms[-1]} communities")
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(resolutions, n_comms, "o-", color=COLORS[3], linewidth=2)
     ax.set_xlabel("Resolution parameter")
     ax.set_ylabel("Number of communities")
-    ax.set_title("Number of communities vs. resolution (Louvain)")
+    ax.set_title("Number of communities vs. resolution (Leiden)")
     ax.grid(True, linestyle="--", alpha=0.4)
     fig.savefig(output_path)
     plt.close(fig)
@@ -683,12 +566,74 @@ def plot_resolution_curve(G, resolutions, output_path):
 
 
 # ============================================================
+# 7b. EXPORT META-GRAPH FOR GEPHI (replaces plot_community_graph)
+# ============================================================
+
+def export_meta_graph_for_gephi(G, communities, community_names,
+                                output_path, top_n=None):
+    """
+    Export a community-level meta-graph as GEXF for Gephi.
+
+    - One node per community (optionally only the top_n largest).
+    - Node attribute `size` = number of channels in that community.
+    - Node attribute `label` = community name (dominant language).
+    - Edge attribute `weight` = number of real inter-community
+      connections in the FULL graph (not a sample).
+
+    In Gephi:
+      1. File -> Open -> select the .gexf file.
+      2. Layout -> ForceAtlas 2 -> Run.
+      3. Appearance -> Nodes -> Size -> based on `size`.
+      4. Appearance -> Edges -> Width -> based on `weight`.
+      5. Preview -> Export -> PNG / PDF.
+    """
+    print(f"[7/7] Exporting meta-graph for Gephi (top_n={top_n})...")
+
+    if top_n is not None:
+        selected = sorted(communities, key=lambda cn: len(cn[1]), reverse=True)[:top_n]
+    else:
+        selected = communities
+
+    node_to_comm = {}
+    for comm_id, nodes in selected:
+        for n in nodes:
+            node_to_comm[n] = comm_id
+
+    # Count real inter-community edges across the FULL graph.
+    # igraph gives us vertex indices; map back to channel IDs.
+    edge_weights = Counter()
+    for e in G.es:
+        u = channel_ids[e.source]
+        v = channel_ids[e.target]
+        cu = node_to_comm.get(u)
+        cv = node_to_comm.get(v)
+        if cu is not None and cv is not None and cu != cv:
+            key = tuple(sorted((cu, cv)))
+            edge_weights[key] += 1
+
+    # Build NetworkX graph (GEXF export is native in NetworkX)
+    meta = nx.Graph()
+    for comm_id, nodes in selected:
+        meta.add_node(
+            int(comm_id),
+            size=len(nodes),
+            label=community_names.get(comm_id, f"Community_{comm_id}"),
+        )
+    for (cu, cv), w in edge_weights.items():
+        meta.add_edge(int(cu), int(cv), weight=int(w))
+
+    nx.write_gexf(meta, output_path)
+    print(f"   -> Saved: {output_path} ({meta.number_of_nodes()} nodes, "
+          f"{meta.number_of_edges()} edges)")
+
+
+# ============================================================
 # 8. MAIN PROGRAM
 # ============================================================
 
 if __name__ == "__main__":
-    # --- Paths ---
-    BASE_DIR = Path.home() / "Documents" / "telescope_data_analysis" / "telescope_files"
+    from config import BASE_DIR
+
     EDGELIST = BASE_DIR / "channel_to_channel_graph.csv"
     LANGUAGE_FILE = BASE_DIR / "Channel_Language.csv"
     SOURCE_METADATA_FILE = BASE_DIR / "Source_Channel_Metadata.csv"
@@ -697,44 +642,58 @@ if __name__ == "__main__":
     OUTPUT_SIZES = BASE_DIR / "community_sizes.csv"
     OUTPUT_NAMES = BASE_DIR / "community_names.csv"
 
-    CHARTS_DIR = BASE_DIR / "charts"
-    CHARTS_DIR.mkdir(exist_ok=True)
+    CHARTS_DIR = BASE_DIR / "charts" / PROGRAM_NAME
+    CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    (CHARTS_DIR / "README.md").write_text(
+        "# Charts — Community detection (igraph + Leiden)\n\n"
+        "All outputs produced by `community_detection.py`.\n\n"
+        "## Matplotlib PNG\n"
+        "- `community_size_distribution.png` — histogram of community sizes (log y).\n"
+        "- `top_20_communities.png` — 20 largest communities, named by dominant language.\n"
+        "- `degree_distribution.png` — CCDF of node degree (log-log).\n"
+        "- `resolution_curve.png` — number of communities vs. Leiden resolution.\n\n"
+        "## Gephi\n"
+        "- `meta_graph.gexf` — community-level meta-graph to open in Gephi.\n"
+        "  Node size = channel count, edge width = inter-community links.\n",
+        encoding="utf-8",
+    )
 
     # --- Load graph ---
-    G = load_channel_graph(EDGELIST)
+    G, channel_ids = load_channel_graph(EDGELIST)
 
     # --- Basic stats ---
     stats = compute_basic_stats(G)
 
-    # --- Detect communities ---
-    communities = detect_communities(G, resolution=1.0, seed=42)  # list of (id, node_set)
+    # --- Detect communities (Leiden) ---
+    communities = detect_communities(G, resolution=1.0, seed=42)
 
     # --- Load language metadata ---
     language_map = load_language_metadata(LANGUAGE_FILE)
-    coverage_before = sum(1 for n in G.nodes() if n in language_map)
+    coverage_before = sum(1 for n in channel_ids if n in language_map)
     print(f"   -> Coverage before title enrichment: {coverage_before:,} / "
-          f"{G.number_of_nodes():,} graph channels "
-          f"({100*coverage_before/G.number_of_nodes():.1f}%)")
+          f"{len(channel_ids):,} graph channels "
+          f"({100*coverage_before/len(channel_ids):.1f}%)")
 
     # --- Enrich language metadata from Source_Channel_Metadata.csv ---
     titles = load_source_metadata_titles(SOURCE_METADATA_FILE)
     language_map, n_added = enrich_language_map_from_titles(language_map, titles)
-    coverage_after = sum(1 for n in G.nodes() if n in language_map)
+    coverage_after = sum(1 for n in channel_ids if n in language_map)
     print(f"   -> Coverage after title enrichment: {coverage_after:,} / "
-          f"{G.number_of_nodes():,} graph channels "
-          f"({100*coverage_after/G.number_of_nodes():.1f}%)")
+          f"{len(channel_ids):,} graph channels "
+          f"({100*coverage_after/len(channel_ids):.1f}%)")
 
     # --- Name communities ---
     community_names = name_communities(communities, language_map)
 
-    # --- Export CSVs ---
+    # --- Export CSVs (each in its own folder, with a README) ---
     export_communities(communities, OUTPUT_COMMS)
     df_sizes = export_community_sizes(communities, OUTPUT_SIZES)
     export_community_names(community_names, OUTPUT_NAMES)
 
     sizes = df_sizes["size"].tolist()
 
-    # --- Generate charts ---
+    # --- Matplotlib charts ---
     plot_community_size_distribution(
         sizes, CHARTS_DIR / "community_size_distribution.png"
     )
@@ -745,15 +704,18 @@ if __name__ == "__main__":
     plot_degree_distribution(
         G, CHARTS_DIR / "degree_distribution.png"
     )
-    plot_community_graph(
-        G, communities, community_names,
-        top_n=5,
-        output_path=CHARTS_DIR / "community_graph.png"
-    )
     plot_resolution_curve(
         G, resolutions=[0.5, 0.8, 1.0, 1.2, 1.5, 2.0],
         output_path=CHARTS_DIR / "resolution_curve.png"
     )
 
+    # --- GEXF export for Gephi (replaces the Matplotlib community graph) ---
+    export_meta_graph_for_gephi(
+        G, communities, community_names,
+        top_n=5,
+        output_path=CHARTS_DIR / "meta_graph.gexf"
+    )
+
     print("\n✅ Analysis completed.")
     print(f"   CSVs and charts saved in: {BASE_DIR}")
+    print(f"   Open {CHARTS_DIR / 'meta_graph.gexf'} in Gephi for the meta-graph.")

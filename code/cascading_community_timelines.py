@@ -1,7 +1,7 @@
 """
 Builds the base dataset for the propagation-dynamics stage of the
 project (after community detection + naming, see
-community_detection_fixed.py).
+community_detection.py).
 
 Joins three files:
   - Message_Forwarding_Flows.csv (20,538,309 rows): each row is one
@@ -16,7 +16,7 @@ Joins three files:
     Source_Channel_Metadata.csv and Temporal_Channel_Metadata.csv all
     lack one (see progress report §Methodology / next steps).
   - communities.csv (261,172 rows, produced by
-    community_detection_fixed.py): channel_id -> community_id.
+    community_detection.py): channel_id -> community_id.
 
 Output: cascade_community_timeline.csv, one row per cascade, with:
   connected_component_id, date, n_channels, n_communities,
@@ -33,6 +33,13 @@ Expect this to take a while given the scale (20M+ rows) — let it run
 to completion rather than interrupting it; it writes the output file
 incrementally (chunk by chunk), so a partial run still leaves usable
 partial output.
+
+Output layout (same convention as community_detection.py):
+  - The CSV is written into its own folder named after the CSV file
+    (without extension), together with a README.md describing its
+    content and columns.
+  - If this program later produces charts, they will go into
+    charts/<PROGRAM_NAME>/ so they don't mix with other programs.
 """
 
 import ast
@@ -41,11 +48,16 @@ from pathlib import Path
 
 import pandas as pd
 
-BASE_DIR = Path.home() / "Documents" / "telescope_data_analysis" / "telescope_files"
+from config import BASE_DIR  # see code/config.py (env var TELESCOPE_DIR)
+
 FLOWS_FILE = BASE_DIR / "Message_Forwarding_Flows.csv"
 INTERACTIONS_FILE = BASE_DIR / "Aggregated_User_Interactions.csv"
-COMMUNITIES_FILE = BASE_DIR / "communities.csv"
+COMMUNITIES_FILE = BASE_DIR / "communities" / "communities.csv"
 OUTPUT_FILE = BASE_DIR / "cascade_community_timeline.csv"
+
+# Name of this program, used to isolate its chart folder from others
+# (same convention as community_detection.py).
+PROGRAM_NAME = "cascade_community_timeline"
 
 # Extracts just the channel_id from each ('channel_id', 'message_id') pair
 # in connected_component_nodes, e.g. "[('1145313737', '38274'), ...]".
@@ -159,7 +171,118 @@ def build_cascade_timeline(flows_path, interactions_df, channel_to_community, ou
           f"({100*cross_community/total:.1f}%)")
 
 
+# ============================================================
+# EXPORT CSV WITH README (same convention as community_detection.py)
+# ============================================================
+
+def write_readme_for_cascade_timeline(output_path, n_rows, n_dated,
+                                      n_cross_community):
+    """
+    Write a README.md next to the CSV, describing its content and
+    columns. Called once the streaming pass is finished, so it can
+    report the real row counts.
+
+    The CSV itself is written incrementally by build_cascade_timeline
+    (chunk by chunk) to keep memory bounded, so we do NOT route it
+    through a DataFrame-based helper — we only write the README here.
+    """
+    output_path = Path(output_path)
+    folder = output_path.parent / output_path.stem
+    folder.mkdir(parents=True, exist_ok=True)
+    # Note: build_cascade_timeline already wrote the CSV at output_path;
+    # we move it into its dedicated folder here.
+    target_csv = folder / output_path.name
+    if output_path.exists() and output_path != target_csv:
+        output_path.replace(target_csv)
+
+    readme_path = folder / "README.md"
+    lines = [
+        "# Cascade → communities timeline",
+        "",
+        "One row per message-forwarding cascade (connected component of",
+        "the forwarding graph), with its date, engagement and the set of",
+        "communities it touches.",
+        "",
+        "## Source files",
+        "- `Message_Forwarding_Flows.csv` — one row per cascade, with the",
+        "  list of `(channel_id, message_id)` pairs in",
+        "  `connected_component_nodes`.",
+        "- `Aggregated_User_Interactions.csv` — one row per cascade with",
+        "  a known date and engagement (`views`, `forwards`), inside",
+        "  `filtered_message_info`. This is the only file with real",
+        "  calendar timestamps.",
+        "- `communities.csv` — `channel_id → community_id` (produced by",
+        "  `community_detection.py`).",
+        "",
+        "## File",
+        f"- `{output_path.name}` — {n_rows:,} rows.",
+        f"- Cascades with a known date: {n_dated:,} "
+        f"({100 * n_dated / n_rows:.1f}% of all cascades).",
+        f"- Cross-community cascades (>= 2 communities): "
+        f"{n_cross_community:,} "
+        f"({100 * n_cross_community / n_rows:.1f}% of all cascades).",
+        "",
+        "## Columns",
+        "- `connected_component_id` (str) — cascade identifier; unique",
+        "  per row. Join key with `Aggregated_User_Interactions.csv`.",
+        "- `n_channels` (int) — number of distinct channels that took",
+        "  part in the cascade (any instance of the propagated message",
+        "  across channels counts once).",
+        "- `n_communities` (int) — number of distinct communities among",
+        "  those channels, using `communities.csv`. Cascades with",
+        "  `n_communities >= 2` are the ones relevant for cross-community",
+        "  propagation analysis.",
+        "- `communities` (str) — `;`-joined community IDs touched by the",
+        "  cascade (sorted, deduplicated). Empty if no channel of the",
+        "  cascade is in `communities.csv`.",
+        "- `date` (datetime, UTC) — cascade date, taken from",
+        "  `Aggregated_User_Interactions.csv`. `NaN` when the cascade has",
+        "  no entry in that file (~32% of cascades).",
+        "- `views` (int) — total views reported for the cascade in",
+        "  `Aggregated_User_Interactions.csv`. 0 when unknown.",
+        "- `forwards` (int) — total forwards reported for the cascade in",
+        "  `Aggregated_User_Interactions.csv`. 0 when unknown.",
+        "",
+        "## Coverage note",
+        "`Aggregated_User_Interactions.csv` is a strict subset of",
+        "`Message_Forwarding_Flows.csv` (every `connected_component_id`",
+        "in the former also appears in the latter, and the ID is unique",
+        "in both). About 68% of cascades therefore have a known date;",
+        "the remaining 32% have `date = NaN` but are kept so that",
+        "structural statistics (`n_channels`, `n_communities`) remain",
+        "complete over the full cascade set.",
+        "",
+        "## Notes",
+        "- The CSV is written incrementally (chunk by chunk) by",
+        "  `build_cascade_timeline`, so a partial run leaves a usable",
+        "  partial file rather than nothing.",
+        "- Row order follows the source file order of",
+        "  `Message_Forwarding_Flows.csv`.",
+        "",
+    ]
+    readme_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"   -> CSV moved to: {target_csv}")
+    print(f"   -> README:       {readme_path}")
+
+
 if __name__ == "__main__":
     channel_to_community = load_channel_to_community(COMMUNITIES_FILE)
     interactions_df = load_interactions(INTERACTIONS_FILE)
     build_cascade_timeline(FLOWS_FILE, interactions_df, channel_to_community, OUTPUT_FILE)
+
+    # --- Post-pass: move CSV into its dedicated folder + write README ---
+    # Re-read the header row to recover the real row count without
+    # loading the whole file back into memory.
+    n_rows = 0
+    n_dated = 0
+    n_cross_community = 0
+    if OUTPUT_FILE.exists():
+        for chunk in pd.read_csv(OUTPUT_FILE, usecols=["date", "n_communities"],
+                                 dtype={"date": str}, chunksize=1_000_000):
+            n_rows += len(chunk)
+            n_dated += chunk["date"].notna().sum()
+            n_cross_community += (chunk["n_communities"] >= 2).sum()
+
+    write_readme_for_cascade_timeline(
+        OUTPUT_FILE, n_rows, n_dated, n_cross_community
+    )
