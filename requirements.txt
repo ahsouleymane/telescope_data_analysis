@@ -1,0 +1,13 @@
+# v1 : communauty, cascading, maps, languages
+pandas==3.0.6
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.9.1
+networkx==3.7
+igraph==1.0.0
+matplotlib==3.11.2
+langdetect==1.0.9
+
+# v2 : pipeline PySpark
+pyspark
+pyarrow==26.0.0
