@@ -6,3 +6,4 @@ telescope_files/Message_Forwarding_Flows.csv
 telescope_files/Aggregated_User_Interactions.csv
 telescope_files/cascade_community_timeline/cascade_community_timeline.csv
 .venv/
+telescope_pipeline_files/

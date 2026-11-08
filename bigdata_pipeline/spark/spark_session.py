@@ -32,7 +32,6 @@ def get_spark(app="telescope"):
     spark = (
         SparkSession.builder.master(f"local[{cores}]").appName(app)
         .config("spark.driver.memory", memory)
-        .config("spark.local.dir", tmp)
         .config("spark.sql.session.timeZone", "UTC")
         .config("spark.sql.shuffle.partitions", os.environ.get("TELESCOPE_SHUFFLE_PARTITIONS", "48"))
         .config("spark.python.worker.reuse", "true")

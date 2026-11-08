@@ -33,8 +33,10 @@ def list_inputs(raw):
     """
     Yield dicts {src, member, batch, channel, size} for every .jsonl found under
     `raw`, which may be a folder of .jsonl, a folder of .zip, one .zip, or a mix.
-    `batch` is the folder (inside the zip, or on disk) that holds the file; for
-    files at the root of a zip it is the zip's name.
+    `batch` is the folder (inside the zip, or on disk) that holds the file. For a
+    file at the root of a zip (one zip per channel), it is the folder of the
+    DISK that holds the zip (e.g. 1877677892_to_1961731638/1877677892.zip ->
+    batch 1877677892_to_1961731638); when `raw` is itself one zip, its name.
     """
     raw = Path(raw)
     paths = [raw] if raw.is_file() else sorted(raw.rglob("*"))
@@ -51,6 +53,9 @@ def list_inputs(raw):
                     name = info.filename
                     if name.lower().endswith(".jsonl") and not name.endswith("/"):
                         folder = Path(name).parent.as_posix()
-                        batch = folder if folder != "." else p.stem
+                        if folder != ".":
+                            batch = folder
+                        else:
+                            batch = p.parent.name if raw.is_dir() else p.stem
                         yield {"src": str(p), "member": name, "batch": safe_batch(batch),
                                "channel": channel_of(name), "size": info.file_size}

@@ -107,7 +107,18 @@ class TestInputs(unittest.TestCase):
         self.assertEqual(self.found(self.zip_root), [("rootzip", 444)])
 
     def test_folder_of_zips(self):
-        self.assertEqual(self.found(self.tmp / "zips"), [("3_to_4", 333), ("rootzip", 444)])
+        self.assertEqual(self.found(self.tmp / "zips"), [("3_to_4", 333), ("zips", 444)])
+
+    def test_one_zip_per_channel_in_lot_folders(self):
+        """lots/<lot>/<channel>.zip, each zip holding <channel>.jsonl at its root -> batch = lot folder."""
+        for lot, chans in (("10_to_19", (11, 12)), ("20_to_29", (21,))):
+            (self.tmp / "lots" / lot).mkdir(parents=True)
+            for c in chans:
+                with zipfile.ZipFile(self.tmp / "lots" / lot / f"{c}.zip", "w") as z:
+                    z.writestr(f"{c}.jsonl", "x\n")
+        self.assertEqual(self.found(self.tmp / "lots"),
+                         [("10_to_19", 11), ("10_to_19", 12), ("20_to_29", 21)])
+        self.assertEqual(self.found(self.tmp / "lots" / "10_to_19"), [("10_to_19", 11), ("10_to_19", 12)])
 
     def test_zip_member_reads_same_as_plain(self):
         item = next(iter(list_inputs(self.zip_folder)))
