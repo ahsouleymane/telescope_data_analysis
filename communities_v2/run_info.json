@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-08",
+  "tables": [
+    "communities_leiden",
+    "community_summary",
+    "community_profiles_leiden",
+    "community_flows_leiden",
+    "community_comparison",
+    "yearly_communities"
+  ],
+  "seconds": 307,
+  "args": {
+    "gold": "telescope_pipeline_files/gold",
+    "out": "communities_v2",
+    "v1": "telescope_files/communities/communities.csv",
+    "resolution": "1.0",
+    "seed": "42",
+    "min_weight": "1",
+    "infomap_trials": "1",
+    "skip_infomap": "True",
+    "skip_yearly": "False",
+    "min_year_edges": "5000",
+    "top_flows": "15",
+    "no_charts": "False",
+    "selftest": "False"
+  }
+}

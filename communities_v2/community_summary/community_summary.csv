@@ -1,0 +1,2 @@
+algorithm,n_nodes,n_edges_directed,total_forwards,n_communities,modularity,intra_share,largest_community,largest_share,top10_share,singletons,codelength,seconds
+leiden,267518,2733450,34963142,993,0.7011,0.7869,54674,0.2044,0.6798,0,,211
