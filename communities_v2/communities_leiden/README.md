@@ -4,7 +4,7 @@ Community of every channel that has at least one forward link, from Leiden. Comm
 
 ## How it was generated
 
-`community_detection_v2.py`, run on 2026-11-08.
+`community_detection_v2.py`, run on 2026-11-10.
 
 - Input: monthly edges `telescope_pipeline_files/gold` (6,880,522 (origin, destination, month) rows).
 - Graph: forwards summed over all months, self-loops removed, pairs with fewer than 1 forward(s) dropped.

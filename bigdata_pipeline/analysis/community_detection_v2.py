@@ -13,16 +13,17 @@ What it does
   2. Quality: modularity, share of forwards that stay inside a community, size distribution.
   3. Diffusion between communities: who forwards whom, as a community x community table.
   4. Time: one Leiden per year, stability of the partitions between consecutive years (NMI, ARI).
-  5. Comparison with the v1 partition (--v1 communities.csv): NMI, ARI, homogeneity, completeness.
+  5. Optional: Leiden vs Infomap agreement, noise floor (--seed-baseline), number of communities vs
+     resolution (--resolution-curve), communities named by dominant language (--languages).
 
 Every table is written as its own folder  <out>/<name>/<name>.csv + README.md
 (how it was generated, what the columns mean), the convention of the project.
-Charts (English) go to <out>/figures/.
+Charts (English, same types and look as the v1 charts) go to --figdir (images only).
 
 Usage
   python3 community_detection_v2.py --selftest
-  python3 community_detection_v2.py --gold telescope_pipeline_files/gold --out communities_v2 \
-         --v1 communities/communities.csv
+  python3 community_detection_v2.py --gold telescope_pipeline_files/gold --out communities_v2 --figdir figures/community_detection \
+         --languages telescope_files/Channel_Language.csv
   add --skip-infomap to go faster, --resolution 0.5 for fewer/larger communities
 """
 import argparse
@@ -166,16 +167,6 @@ def compare(nodes_a, mem_a, nodes_b, mem_b):
             "completeness": round(float(completeness_score(x, y)), 4)}
 
 
-def load_v1(path):
-    df = pd.read_csv(path)
-    low = {c.lower(): c for c in df.columns}
-    idc = next((low[c] for c in ("channel_id", "node", "id", "channel", "channelid") if c in low), df.columns[0])
-    cc = next((low[c] for c in ("community", "comm", "louvain", "leiden", "cluster", "community_id") if c in low), df.columns[1])
-    print(f"  v1 file: id column = '{idc}', community column = '{cc}', {len(df):,} rows")
-    df = df[[idc, cc]].dropna().drop_duplicates(idc)
-    return df[idc].astype("int64").to_numpy(), pd.factorize(df[cc])[0].astype(np.int64)
-
-
 def flows_table(net, mem, top=15):
     """Community x community forwards (top communities by size, the rest = 'other')."""
     k = mem.max() + 1
@@ -238,18 +229,19 @@ BLUE, ORANGE = "#2a78d6", "#eb6834"
 
 
 def _style(ax):
-    for s in ("top", "right"):
-        ax.spines[s].set_visible(False)
-    for s in ("left", "bottom"):
-        ax.spines[s].set_color("#b8b7b1")
-    ax.grid(True, color=GRID, linewidth=0.8)
+    """Same look as the v1 charts: serif font, boxed axes, dashed light grid."""
+    ax.grid(True, which="major", linestyle="--", linewidth=0.8, color="#d9d9d9")
     ax.set_axisbelow(True)
-    ax.tick_params(colors=MUTED, labelsize=9)
-    ax.xaxis.label.set_color(MUTED)
-    ax.yaxis.label.set_color(MUTED)
+    ax.tick_params(colors="#222222", labelsize=9)
 
 
-def make_charts(figdir, results, yearly, flows_info, v1_cont):
+def _rc(plt):
+    plt.rcParams.update({"font.family": "serif", "font.size": 10, "axes.titlesize": 11,
+                         "axes.titleweight": "normal", "axes.titlecolor": "black",
+                         "axes.labelcolor": "black", "figure.dpi": 100})
+
+
+def make_charts(figdir, results, yearly, flows_info):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -257,8 +249,7 @@ def make_charts(figdir, results, yearly, flows_info, v1_cont):
     figdir = Path(figdir)
     figdir.mkdir(parents=True, exist_ok=True)
     seq = LinearSegmentedColormap.from_list("blue_seq", ["#eef4fc", "#b5d0f2", "#2a78d6", "#0d3b78"])
-    plt.rcParams.update({"font.size": 10, "axes.titlesize": 11, "axes.titleweight": "bold",
-                         "axes.titlecolor": INK, "figure.dpi": 100})
+    _rc(plt)
 
     # 1. community size distribution
     fig, ax = plt.subplots(figsize=(7.2, 4.4))
@@ -269,7 +260,7 @@ def make_charts(figdir, results, yearly, flows_info, v1_cont):
     ax.set_xlabel("Community rank (1 = largest)"); ax.set_ylabel("Channels in the community")
     ax.set_title("Community size distribution"); _style(ax)
     ax.legend(frameon=False, fontsize=9, labelcolor=INK)
-    fig.tight_layout(); fig.savefig(figdir / "fig_community_sizes.png", dpi=200); plt.close(fig)
+    fig.tight_layout(); fig.savefig(figdir / "community_size_rank.png", dpi=200); plt.close(fig)
 
     # 2. yearly structure (three panels, one measure each)
     if yearly is not None and len(yearly) >= 2:
@@ -280,17 +271,22 @@ def make_charts(figdir, results, yearly, flows_info, v1_cont):
                     markeredgecolor="white", markeredgewidth=1)
             ax.set_title(title); _style(ax)
             ax.set_xticks(yearly["year"]); ax.tick_params(axis="x", rotation=60)
-        fig.tight_layout(); fig.savefig(figdir / "fig_yearly_structure.png", dpi=200); plt.close(fig)
+        fig.tight_layout(); fig.savefig(figdir / "yearly_structure.png", dpi=200); plt.close(fig)
 
         y2 = yearly.dropna(subset=["nmi_prev"])
         if len(y2):
             fig, ax = plt.subplots(figsize=(7.2, 3.8))
             ax.plot(y2["year"], y2["nmi_prev"], color=BLUE, linewidth=2, marker="o", markersize=6,
-                    markeredgecolor="white", markeredgewidth=1)
-            ax.set_ylim(0, 1); ax.set_xticks(y2["year"])
-            ax.set_xlabel("Year"); ax.set_ylabel("NMI with the previous year")
+                    markeredgecolor="white", markeredgewidth=1, label="Consecutive years")
+            if "nmi_other_seed" in yearly and yearly["nmi_other_seed"].notna().any():
+                ax.plot(yearly["year"], yearly["nmi_other_seed"], color=ORANGE, linewidth=2, marker="o",
+                        markersize=6, markeredgecolor="white", markeredgewidth=1,
+                        label="Same year, different random seed")
+                ax.legend(frameon=False, fontsize=9, labelcolor=INK, loc="lower right")
+            ax.set_ylim(0, 1); ax.set_xticks(yearly["year"])
+            ax.set_xlabel("Year"); ax.set_ylabel("NMI")
             ax.set_title("Stability of the community structure from year to year"); _style(ax)
-            fig.tight_layout(); fig.savefig(figdir / "fig_yearly_stability.png", dpi=200); plt.close(fig)
+            fig.tight_layout(); fig.savefig(figdir / "yearly_stability.png", dpi=200); plt.close(fig)
 
     # 3. forwards between communities (row-normalised)
     mat, labels = flows_info
@@ -309,27 +305,213 @@ def make_charts(figdir, results, yearly, flows_info, v1_cont):
                         color="white" if mat[i, j] > 0.5 else INK)
     cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02); cb.ax.tick_params(labelsize=8)
     cb.set_label("Share of outgoing forwards", fontsize=9, color=MUTED)
-    fig.tight_layout(); fig.savefig(figdir / "fig_flows_between_communities.png", dpi=200); plt.close(fig)
+    fig.tight_layout(); fig.savefig(figdir / "flows_between_communities.png", dpi=200); plt.close(fig)
 
-    # 4. v1 vs v2
-    if v1_cont is not None:
-        cont, rl, cl = v1_cont
-        fig, ax = plt.subplots(figsize=(7.4, 6.0))
-        im = ax.imshow(cont, cmap=seq, vmin=0, vmax=1)
-        ax.set_xticks(range(len(cl))); ax.set_xticklabels(cl, fontsize=8)
-        ax.set_yticks(range(len(rl))); ax.set_yticklabels(rl, fontsize=8)
-        ax.set_xlabel("v2 community (Leiden, message-level graph)")
-        ax.set_ylabel("v1 community")
-        ax.set_title("Where the channels of each v1 community end up in v2 (row share)")
-        ax.title.set_fontsize(10)
-        for i in range(cont.shape[0]):
-            for j in range(cont.shape[1]):
-                if cont[i, j] >= 0.15:
-                    ax.text(j, i, f"{cont[i, j]*100:.0f}", ha="center", va="center", fontsize=7,
-                            color="white" if cont[i, j] > 0.5 else INK)
-        cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02); cb.ax.tick_params(labelsize=8)
-        fig.tight_layout(); fig.savefig(figdir / "fig_v1_vs_v2.png", dpi=200); plt.close(fig)
     print(f"  charts written to {figdir}")
+
+
+
+# ---------------------------------------------------------------- v1-style charts, Gephi meta-graph
+
+def resolution_curve(net, resolutions, seed, base_res, base_stats):
+    """Leiden at several resolutions (the base one is reused): communities and modularity."""
+    rows = []
+    for r in resolutions:
+        t = time.time()
+        if abs(r - base_res) < 1e-9:
+            st, secs = base_stats, np.nan
+        else:
+            st = partition_stats(net, relabel_by_size(run_leiden(net, r, seed)))
+            secs = round(time.time() - t)
+        rows.append({"resolution": r, "n_communities": st["n_communities"], "modularity": st["modularity"],
+                     "intra_share": st["intra_share"], "largest_share": st["largest_share"], "seconds": secs})
+        print(f"  resolution {r}: {st['n_communities']:,} communities, Q={st['modularity']}")
+    return pd.DataFrame(rows)
+
+
+def meta_graph(net, mem, top):
+    """Community-level graph of the `top` largest communities (undirected, as in v1).
+    Edge weight = forwards between the two communities (both directions), `links` = distinct channel pairs."""
+    top = min(top, int(mem.max()) + 1)
+    sizes = np.bincount(mem)
+    co, cd = mem[net.src], mem[net.dst]
+    keep = (co < top) & (cd < top)
+    df = (pd.DataFrame({"o": co[keep], "d": cd[keep], "w": net.w[keep]})
+          .groupby(["o", "d"], as_index=False).agg(forwards=("w", "sum"), links=("w", "size")))
+    inside = df[df.o == df.d].set_index("o")["forwards"]
+    nodes = pd.DataFrame({"community": np.arange(top), "size": sizes[:top],
+                          "forwards_inside": [int(inside.get(c, 0)) for c in range(top)]})
+    between = df[df.o != df.d].copy()
+    between["a"] = np.minimum(between.o, between.d)
+    between["b"] = np.maximum(between.o, between.d)
+    edges = between.groupby(["a", "b"], as_index=False)[["forwards", "links"]].sum()
+    return nodes, edges
+
+
+def write_gexf(path, meta):
+    try:
+        import networkx as nx
+    except ImportError:
+        print("  networkx not installed: meta_graph.gexf skipped")
+        return
+    nodes, edges = meta
+    g = nx.Graph()
+    for r in nodes.itertuples():
+        g.add_node(int(r.community), label=f"Community {r.community} ({r.size:,} channels)",
+                   size=int(r.size), forwards_inside=int(r.forwards_inside))
+    for r in edges.itertuples():
+        g.add_edge(int(r.a), int(r.b), weight=int(r.forwards), links=int(r.links))
+    nx.write_gexf(g, str(path))
+
+
+def extra_charts(figdir, net, mem, curve):
+    """The v1 chart types: size histogram, degree CCDF, number of communities vs resolution."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    figdir = Path(figdir)
+    _rc(plt)
+
+    # histogram of community sizes (log y)
+    sizes = np.bincount(mem)
+    fig, ax = plt.subplots(figsize=(7.2, 4.6))
+    ax.hist(sizes, bins=40, color="#2F5597", edgecolor="white", rwidth=0.9)
+    ax.set_yscale("log")
+    ax.set_xlabel("Community size (number of channels)")
+    ax.set_ylabel("Number of communities (log scale)")
+    ax.set_title("Distribution of community sizes"); _style(ax)
+    fig.tight_layout(); fig.savefig(figdir / "community_size_distribution.png", dpi=200); plt.close(fig)
+
+    # degree distribution: complementary CDF, log-log
+    a, b, _ = undirected(net)
+    n = len(net.nodes)
+    deg = np.bincount(a, minlength=n) + np.bincount(b, minlength=n)
+    v, c = np.unique(deg[deg > 0], return_counts=True)
+    ccdf = c[::-1].cumsum()[::-1] / c.sum()
+    fig, ax = plt.subplots(figsize=(7.2, 4.6))
+    ax.plot(v, ccdf, color="#86B3A1", linewidth=2)
+    ax.set_xscale("log"); ax.set_yscale("log")
+    ax.set_xlabel("Degree k (log scale)"); ax.set_ylabel("P(Degree >= k)  (log scale)")
+    ax.set_title("Degree distribution - complementary CDF (log-log)"); _style(ax)
+    ax.grid(True, which="minor", linestyle="--", linewidth=0.5, color="#e6e6e6")
+    fig.tight_layout(); fig.savefig(figdir / "degree_distribution.png", dpi=200); plt.close(fig)
+
+    # number of communities vs. Leiden resolution
+    if curve is not None and len(curve) >= 2:
+        fig, ax = plt.subplots(figsize=(7.2, 4.6))
+        ax.plot(curve["resolution"], curve["n_communities"], color="#E8A33D", linewidth=2, marker="o")
+        ax.set_xlabel("Resolution parameter"); ax.set_ylabel("Number of communities")
+        ax.set_title("Number of communities vs. resolution (Leiden)"); _style(ax)
+        fig.tight_layout(); fig.savefig(figdir / "resolution_curve.png", dpi=200); plt.close(fig)
+
+
+FIG_DOC = {
+    "community_size_distribution.png": "histogram of community sizes (log y).",
+    "degree_distribution.png": "CCDF of node degree (log-log).",
+    "resolution_curve.png": "number of communities vs. Leiden resolution (needs --resolution-curve).",
+    "top_20_communities.png": "the largest communities, named by dominant language when --languages is given.",
+    "community_size_rank.png": "community size against rank, log-log, one line per algorithm.",
+    "flows_between_communities.png": "share of each community's outgoing forwards that go to each community (15 largest + other).",
+    "yearly_structure.png": "active channels, communities and modularity per year.",
+    "yearly_stability.png": "NMI between consecutive years, with the same-year/other-seed noise floor when --seed-baseline is used.",
+    "meta_graph.gexf": "community-level meta-graph to open in Gephi. Node size = channel count, "
+                       "edge weight = forwards between the two communities (attribute `links` = distinct channel pairs).",
+}
+
+
+def write_fig_readme(figdir):
+    figdir = Path(figdir)
+    png = [f for f in FIG_DOC if f.endswith(".png") and (figdir / f).exists()]
+    lines = ["# Charts - Community detection (igraph + Leiden), v2", "",
+             "All outputs produced by `community_detection_v2.py`.", "", "## Matplotlib PNG"]
+    lines += [f"- `{f}` - {FIG_DOC[f]}" for f in png]
+    if (figdir / "meta_graph.gexf").exists():
+        lines += ["", "## Gephi", f"- `meta_graph.gexf` - {FIG_DOC['meta_graph.gexf']}"]
+    (figdir / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+
+# ---------------------------------------------------------------- naming by dominant language (as in v1)
+
+LANG_NAMES = {
+    "ru": "Russian", "en": "English", "es": "Spanish", "fr": "French", "de": "German", "it": "Italian",
+    "pt": "Portuguese", "tr": "Turkish", "ar": "Arabic", "fa": "Persian", "zh": "Chinese", "ja": "Japanese",
+    "ko": "Korean", "hi": "Hindi", "id": "Indonesian", "uk": "Ukrainian", "pl": "Polish", "nl": "Dutch",
+    "vi": "Vietnamese", "th": "Thai", "he": "Hebrew", "ha": "Hausa", "yo": "Yoruba", "ig": "Igbo",
+    "am": "Amharic", "sw": "Swahili", "bg": "Bulgarian", "et": "Estonian", "ro": "Romanian", "el": "Greek",
+    "sv": "Swedish", "da": "Danish", "fi": "Finnish", "no": "Norwegian", "cs": "Czech", "sk": "Slovak",
+    "hu": "Hungarian", "sr": "Serbian", "hr": "Croatian", "lt": "Lithuanian", "lv": "Latvian",
+    "ka": "Georgian", "az": "Azerbaijani", "kk": "Kazakh", "uz": "Uzbek", "ur": "Urdu", "bn": "Bengali",
+    "ta": "Tamil", "ml": "Malayalam", "my": "Burmese", "km": "Khmer", "lo": "Lao", "mn": "Mongolian",
+    "si": "Sinhala", "ps": "Pashto", "ku": "Kurdish",
+}
+NULL_LANG = {"", "nan", "none", "null", "unknown", "und", "n/a", "na", "-", "?"}
+
+
+def load_language_map(path):
+    """channel id -> language code, from Channel_Language.csv (tab-separated)."""
+    df = pd.read_csv(path, sep="\t", dtype=str, index_col=0)
+    df.columns = [c.strip() for c in df.columns]
+    if "File Names" not in df.columns:
+        df = pd.read_csv(path, sep="\t", dtype=str)
+        df.columns = [c.strip() for c in df.columns]
+    if "File Names" not in df.columns or "detected_language" not in df.columns:
+        raise SystemExit(f"{path}: expected columns 'File Names' and 'detected_language', got {list(df.columns)}")
+    ids = df["File Names"].astype(str).str.strip().str.replace(r"\.jsonl?$", "", regex=True)
+    langs = df["detected_language"].fillna("").astype(str).str.strip()
+    ok = ids.str.isdigit() & ~langs.str.lower().isin(NULL_LANG)
+    out = dict(zip(pd.to_numeric(ids[ok]).astype("int64"), langs[ok]))
+    print(f"  languages: {len(out):,} channels with a language ({len(df) - ok.sum():,} rows without)")
+    return out
+
+
+def name_communities(nodes, mem, lang_map):
+    """Same rules as v1: '<Language> (<share>%, n=<known>/<size>)'; fewer than 3 known -> low confidence."""
+    size = np.bincount(mem)
+    lang = pd.Series(nodes).map(lang_map)
+    known = pd.DataFrame({"c": mem, "lang": lang}).dropna(subset=["lang"])
+    counts = known.groupby(["c", "lang"]).size().reset_index(name="n")
+    n_known = counts.groupby("c")["n"].sum()
+    top = counts.sort_values(["c", "n"], ascending=[True, False]).drop_duplicates("c").set_index("c")
+    rows = []
+    for c in range(len(size)):
+        nk = int(n_known.get(c, 0))
+        if nk == 0:
+            name, dom, share = "Unknown (0 known)", "", np.nan
+        else:
+            code = str(top.loc[c, "lang"])
+            dom = LANG_NAMES.get(code.lower(), code)
+            share = float(top.loc[c, "n"]) / nk
+            name = (f"Unknown (low confidence: {dom}? n={nk}/{size[c]})" if nk < 3
+                    else f"{dom} ({share * 100:.0f}%, n={nk}/{size[c]})")
+        rows.append({"community": c, "community_name": name, "dominant_language": dom,
+                     "dominant_share": round(share, 4) if share == share else np.nan,
+                     "n_known": nk, "size": int(size[c])})
+    return pd.DataFrame(rows)
+
+
+def top_communities_chart(figdir, mem, names, top=20):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    _rc(plt)
+    sizes = np.bincount(mem)
+    k = min(top, len(sizes))
+    if names is not None:
+        labels = names["community_name"].iloc[:k].tolist()
+        title = f"Top {k} largest communities (named by dominant language)"
+    else:
+        labels = [f"Community {c}" for c in range(k)]
+        title = f"Top {k} largest communities"
+    fig, ax = plt.subplots(figsize=(11, 6.4))
+    bars = ax.bar(range(k), sizes[:k], color="#5B8DD9")
+    for x, v in enumerate(sizes[:k]):
+        ax.text(x, v, f"{v:,}", ha="center", va="bottom", fontsize=7)
+    ax.set_xticks(range(k)); ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=7.5)
+    ax.set_xlabel("Community"); ax.set_ylabel("Number of channels"); ax.set_title(title)
+    ax.grid(True, axis="y", linestyle="--", linewidth=0.8, color="#d9d9d9"); ax.set_axisbelow(True)
+    ax.tick_params(axis="y", labelsize=9)
+    fig.tight_layout(); fig.savefig(Path(figdir) / "top_20_communities.png", dpi=200); plt.close(fig)
 
 
 # ---------------------------------------------------------------- main analysis
@@ -350,12 +532,24 @@ def analyse(edges, args, out):
 
     results, summary = {}, []
     t = time.time()
-    leiden = relabel_by_size(run_leiden(net, args.resolution, args.seed))
+    leiden, reused = None, False
+    prev_csv = Path(out) / "communities_leiden" / "communities_leiden.csv"
+    if args.reuse_leiden and prev_csv.exists():
+        s_prev = pd.read_csv(prev_csv).drop_duplicates("channel_id").set_index("channel_id")["community"]
+        cand = s_prev.reindex(net.nodes)
+        if cand.notna().all():
+            leiden, reused = cand.to_numpy().astype(np.int64), True
+            print(f"Leiden: reused from {prev_csv}")
+        else:
+            print("Leiden: previous file does not match this graph, recomputing")
+    if leiden is None:
+        leiden = relabel_by_size(run_leiden(net, args.resolution, args.seed))
     results["Leiden"] = leiden
-    st = partition_stats(net, leiden); st.update(algorithm="leiden", codelength=np.nan, seconds=round(time.time() - t))
+    st = partition_stats(net, leiden)
+    st.update(algorithm="leiden", codelength=np.nan, seconds=np.nan if reused else round(time.time() - t))
     summary.append(st)
     print(f"Leiden: {st['n_communities']:,} communities, modularity {st['modularity']}, "
-          f"intra share {st['intra_share']} ({st['seconds']}s)")
+          f"intra share {st['intra_share']}")
     if not args.skip_infomap:
         t = time.time()
         mem, cl = run_infomap(net, args.infomap_trials)
@@ -409,29 +603,23 @@ def analyse(edges, args, out):
         m[pos[r.origin_community], pos[r.dest_community]] = r.share_of_origin_out
 
     # comparisons
-    comp, v1_cont = [], None
+    comp = []
     if "Infomap" in results:
         comp.append({"pair": "leiden_vs_infomap", **compare(net.nodes, leiden, net.nodes, results["Infomap"])})
-    if args.v1:
-        v1n, v1m = load_v1(args.v1)
-        for name, mem in results.items():
-            comp.append({"pair": f"{name.lower()}_vs_v1", **compare(net.nodes, mem, v1n, v1m)})
-        s1 = pd.Series(v1m, index=v1n)
-        s2 = pd.Series(leiden, index=net.nodes)
-        common = s1.index.intersection(s2.index)
-        top1 = s1.loc[common].value_counts().index[:12]
-        top2 = s2.loc[common].value_counts().index[:12]
-        ct = pd.crosstab(s1.loc[common], s2.loc[common]).loc[top1, top2]
-        full = pd.crosstab(s1.loc[common], s2.loc[common]).loc[top1].sum(axis=1)
-        v1_cont = ((ct.div(full, axis=0)).to_numpy(), [f"v1-{i}" for i in range(len(top1))],
-                   [str(c) for c in top2])
+    if args.seed_baseline:
+        t = time.time()
+        other = relabel_by_size(run_leiden(net, args.resolution, args.seed + 1))
+        comp.append({"pair": "leiden_seed_vs_leiden_seed+1", **compare(net.nodes, leiden, net.nodes, other)})
+        print(f"seed baseline (full graph): NMI {comp[-1]['nmi']} ({time.time()-t:.0f}s)")
     if comp:
         cc = {"pair": "partitions compared", "n_common": "channels present in both",
               "nmi": "normalized mutual information (0 = unrelated, 1 = identical)",
               "ari": "adjusted Rand index", "homogeneity": "each community of the 2nd partition holds channels of a single community of the 1st (1 = yes)",
               "completeness": "channels of a community of the 1st partition stay together in the 2nd"}
         W.table("community_comparison", pd.DataFrame(comp)[list(cc)],
-                "Agreement between partitions, computed on the channels present in both.", cc)
+                "Agreement between partitions, computed on the channels present in both. "
+                "leiden_seed_vs_leiden_seed+1 is the same algorithm run twice with different random seeds: "
+                "it measures how much of the disagreement between two partitions is just algorithm noise.", cc)
 
     # yearly
     yearly = None
@@ -447,6 +635,9 @@ def analyse(edges, args, out):
                  "n_forwards": int(n_y.w.sum()), "n_communities": int(mem.max() + 1),
                  "modularity": round(modularity_undirected(n_y, mem), 4),
                  "largest_share": round(float(np.bincount(mem).max() / len(mem)), 4)}
+            if args.seed_baseline:
+                alt = relabel_by_size(run_leiden(n_y, args.resolution, args.seed + 1))
+                r["nmi_other_seed"] = compare(n_y.nodes, mem, n_y.nodes, alt)["nmi"]
             if prev is not None:
                 c = compare(n_y.nodes, mem, prev[0], prev[1])
                 r.update(n_common_prev=c["n_common"], nmi_prev=c["nmi"], ari_prev=c["ari"])
@@ -460,12 +651,50 @@ def analyse(edges, args, out):
               "modularity": "modularity of that year's partition", "largest_share": "share of channels in the largest community",
               "n_common_prev": "channels present this year and the previous one", "nmi_prev": "NMI with the previous year",
               "ari_prev": "ARI with the previous year"}
+        if "nmi_other_seed" in yearly:
+            yc["nmi_other_seed"] = "NMI between two Leiden runs of the SAME year with different random seeds (noise floor)"
         if len(yearly):
             W.table("yearly_communities", yearly[list(yc)],
                     "One Leiden partition per year (same parameters) and its similarity to the previous year.", yc)
 
+    curve = None
+    if args.resolution_curve:
+        print("resolution curve ...")
+        curve = resolution_curve(net, [float(x) for x in args.curve_resolutions.split(",")], args.seed,
+                                 args.resolution, partition_stats(net, leiden))
+        cc = {"resolution": "Leiden resolution parameter", "n_communities": "number of communities",
+              "modularity": "modularity of the partition (standard definition, resolution 1)",
+              "intra_share": "share of forwards inside communities", "largest_share": "share of channels in the largest community",
+              "seconds": "run time (empty for the resolution already computed)"}
+        W.table("resolution_curve", curve[list(cc)],
+                "Leiden run at several resolutions on the same graph: how the partition coarsens or splits.", cc)
+    names = None
+    lang_path = args.languages
+    if lang_path is None:
+        for cand in ("Channel_Language.csv", "telescope_files/Channel_Language.csv"):
+            if Path(cand).exists():
+                lang_path = cand
+                break
+    if lang_path:
+        names = name_communities(net.nodes, leiden, load_language_map(lang_path))
+        nc = {"community": "community number (0 = largest)", "community_name": "label built from the dominant language",
+              "dominant_language": "language with most channels among those with a known language",
+              "dominant_share": "its share among the channels with a known language",
+              "n_known": "channels of the community with a known language", "size": "channels in the community"}
+        W.table("community_names", names[list(nc)],
+                "Name of each Leiden community: '<Language> (<share>%, n=<known>/<size>)', with fewer than 3 "
+                "known channels the name is flagged low confidence; no known channel gives 'Unknown (0 known)'. "
+                f"Languages from `{lang_path}`.", nc)
+    else:
+        print("  no Channel_Language.csv found: communities are numbered, not named (use --languages)")
     if not args.no_charts:
-        make_charts(Path(out) / "figures", results, yearly, (m, labels), v1_cont)
+        figdir = Path(args.figdir)
+        figdir.mkdir(parents=True, exist_ok=True)
+        make_charts(figdir, results, yearly, (m, labels))
+        extra_charts(figdir, net, leiden, curve)
+        top_communities_chart(figdir, leiden, names, args.top)
+        write_gexf(figdir / "meta_graph.gexf", meta_graph(net, leiden, args.meta_top))
+        write_fig_readme(figdir)
     (Path(out) / "run_info.json").write_text(json.dumps(
         {"date": date.today().isoformat(), "tables": W.tables, "seconds": round(time.time() - t0),
          "args": {k: str(v) for k, v in vars(args).items()}}, indent=2), encoding="utf-8")
@@ -501,16 +730,26 @@ def selftest(args):
         df, ids, truth = synthetic()
         (tmp / "gold" / "edges_monthly_csv").mkdir(parents=True)
         df.to_csv(tmp / "gold" / "edges_monthly_csv" / "part-0.csv", index=False)
-        # a "v1" partition: truth with 15 % of the channels moved to a wrong community
-        rng = np.random.default_rng(1)
-        v1 = truth.copy()
-        moved = rng.random(len(v1)) < 0.15
-        v1[moved] = rng.integers(0, 6, moved.sum())
-        pd.DataFrame({"channel_id": ids, "community": v1}).to_csv(tmp / "v1.csv", index=False)
-        args.gold, args.out, args.v1 = str(tmp / "gold"), str(tmp / "out"), str(tmp / "v1.csv")
+        args.gold, args.out = str(tmp / "gold"), str(tmp / "out")
+        args.figdir = str(tmp / "figs")
+        lang_codes = np.array(["ru", "en", "fa"])[truth % 3]
+        known = np.random.default_rng(3).random(len(ids)) < 0.7
+        pd.DataFrame({"File Names": [f"{i}.jsonl" for i in ids],
+                      "detected_language": np.where(known, lang_codes, "")}).to_csv(tmp / "lang.csv", sep="\t")
+        args.languages = str(tmp / "lang.csv")
         args.min_year_edges = 100
         edges = load_edges(args.gold)
+        args.seed_baseline = True
+        args.resolution_curve, args.curve_resolutions, args.meta_top = True, "0.5,1.0,2.0", 10
         results, net = analyse(edges, args, args.out)
+        first = pd.read_csv(Path(args.out) / "communities_leiden" / "communities_leiden.csv")
+        args.reuse_leiden, args.skip_yearly = True, True          # second pass must reuse, not recompute
+        results2, _ = analyse(edges, args, args.out)
+        again = pd.read_csv(Path(args.out) / "communities_leiden" / "communities_leiden.csv")
+        assert first.sort_values("channel_id")["community"].tolist() == again.sort_values("channel_id")["community"].tolist(), \
+            "reused Leiden partition differs from the saved one"
+        print("  reuse of the saved Leiden partition: OK")
+        args.reuse_leiden, args.skip_yearly = False, False
         truth_s = pd.Series(truth, index=ids).loc[net.nodes].to_numpy()
         for name, mem in results.items():
             nmi = compare(net.nodes, mem, net.nodes, truth_s)["nmi"]
@@ -520,23 +759,42 @@ def selftest(args):
                   "community_flows_leiden", "community_comparison", "yearly_communities"):
             assert (Path(args.out) / t / f"{t}.csv").exists() and (Path(args.out) / t / "README.md").exists(), t
         if not args.no_charts:
-            for f in ("fig_community_sizes", "fig_yearly_structure", "fig_yearly_stability",
-                      "fig_flows_between_communities", "fig_v1_vs_v2"):
-                assert (Path(args.out) / "figures" / f"{f}.png").exists(), f
+            for f in ("community_size_rank", "community_size_distribution", "degree_distribution",
+                      "resolution_curve", "yearly_structure", "yearly_stability",
+                      "flows_between_communities"):
+                assert (Path(args.figdir) / f"{f}.png").exists(), f
+            assert (Path(args.figdir) / "meta_graph.gexf").exists(), "meta_graph.gexf"
+            assert (Path(args.figdir) / "top_20_communities.png").exists(), "top_20_communities.png"
+            nm = pd.read_csv(Path(args.out) / "community_names" / "community_names.csv")
+            print("  names:", nm["community_name"].tolist()[:3])
+            assert nm["community_name"].str.contains(r"Russian|English|Persian").all(), "community naming"
+            assert (Path(args.figdir) / "README.md").exists(), "figures/README.md"
         print("\nSELFTEST PASSED")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--gold", default="telescope_pipeline_files/gold")
-    ap.add_argument("--out", default="communities_v2")
-    ap.add_argument("--v1", default=None, help="v1 communities CSV (channel id + community columns)")
+    ap.add_argument("--out", default="communities_v2", help="tables: one folder per CSV, each with its README")
+    ap.add_argument("--figdir", default="figures/community_detection", help="charts only (PNG + meta_graph.gexf)")
     ap.add_argument("--resolution", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--min-weight", type=int, default=1, help="drop pairs with fewer total forwards")
     ap.add_argument("--infomap-trials", type=int, default=1)
     ap.add_argument("--skip-infomap", action="store_true")
+    ap.add_argument("--reuse-leiden", action="store_true",
+                    help="load the Leiden partition from <out>/communities_leiden instead of recomputing it")
+    ap.add_argument("--seed-baseline", action="store_true",
+                    help="also run Leiden with a second seed (full graph and each year): the noise floor")
     ap.add_argument("--skip-yearly", action="store_true")
+    ap.add_argument("--resolution-curve", action="store_true",
+                    help="run Leiden at several resolutions (about 3-4 min each on the full graph)")
+    ap.add_argument("--curve-resolutions", default="0.5,0.8,1.0,1.2,1.5,2.0")
+    ap.add_argument("--languages", default=None,
+                    help="Channel_Language.csv (tab-separated, 'File Names' + 'detected_language'): "
+                         "names the communities by dominant language, as in v1")
+    ap.add_argument("--top", type=int, default=20, help="communities shown in top_20_communities.png")
+    ap.add_argument("--meta-top", type=int, default=50, help="communities kept in meta_graph.gexf")
     ap.add_argument("--min-year-edges", type=int, default=5000)
     ap.add_argument("--top-flows", type=int, default=15)
     ap.add_argument("--no-charts", action="store_true")

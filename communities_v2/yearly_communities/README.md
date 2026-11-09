@@ -4,7 +4,7 @@ One Leiden partition per year (same parameters) and its similarity to the previo
 
 ## How it was generated
 
-`community_detection_v2.py`, run on 2026-11-08.
+`community_detection_v2.py`, run on 2026-11-10.
 
 - Input: monthly edges `telescope_pipeline_files/gold` (6,880,522 (origin, destination, month) rows).
 - Graph: forwards summed over all months, self-loops removed, pairs with fewer than 1 forward(s) dropped.
@@ -25,3 +25,4 @@ One Leiden partition per year (same parameters) and its similarity to the previo
 | `n_common_prev` | channels present this year and the previous one |
 | `nmi_prev` | NMI with the previous year |
 | `ari_prev` | ARI with the previous year |
+| `nmi_other_seed` | NMI between two Leiden runs of the SAME year with different random seeds (noise floor) |
