@@ -55,7 +55,13 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from community_detection_v2 import LANG_NAMES, build_net, load_edges, load_language_map  # noqa: E402
+from community_detection_v2 import LANG_NAMES, NULL_LANG, build_net, load_edges, load_language_map  # noqa: E402
+
+# labels seen in Channel_Language.csv that the theme 1 script does not know: complete them here
+NULL_LANG.add("cannot determine")                       # not a language: the detector gave up
+LANG_NAMES.update({"mk": "Macedonian", "ca": "Catalan", "af": "Afrikaans", "tl": "Tagalog", "cy": "Welsh",
+                   "so": "Somali", "sq": "Albanian", "sl": "Slovenian", "zh-cn": "Chinese", "pa": "Punjabi",
+                   "te": "Telugu", "cs": "Czech", "sk": "Slovak"})
 
 
 def lname(code):
@@ -372,9 +378,11 @@ def activity_tables(net, lang_by_node, comm_by_node, stats=None, top_langs=12, t
         agg["messages"] = ("messages", "sum")
     g = k.groupby("language").agg(**agg).reset_index().sort_values("channels", ascending=False)
     g["language_name"] = g.language.map(lname)
-    g["share_of_channels"] = (g.channels / g.channels.sum()).round(4)
-    g["share_of_times_forwarded"] = (g.times_forwarded / g.times_forwarded.sum()).round(4)
-    g["influence_ratio"] = (g.share_of_times_forwarded / g.share_of_channels).round(2)
+    sc = g.channels / g.channels.sum()
+    st = g.times_forwarded / g.times_forwarded.sum()
+    g["share_of_channels"] = sc.round(6)
+    g["share_of_times_forwarded"] = st.round(6)
+    g["influence_ratio"] = (st / sc).round(2)                 # from unrounded shares
     g["forwarded_per_channel"] = (g.times_forwarded / g.channels).round(1)
     cols = ["language", "language_name", "channels", "share_of_channels", "times_forwarded",
             "share_of_times_forwarded", "influence_ratio", "forwarded_per_channel", "forwards_made"]

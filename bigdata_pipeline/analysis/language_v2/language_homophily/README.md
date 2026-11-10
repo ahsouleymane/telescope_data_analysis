@@ -8,7 +8,7 @@ For each origin language: share of its forwards received by channels of the same
 
 Partition: `bigdata_pipeline/analysis/communities_v2/communities_leiden/communities_leiden.csv` (Leiden, detected without language). Language: `telescope_files/Channel_Language.csv`. Forwards: `telescope_pipeline_files/gold` (all months summed, self-loops removed, minimum weight 1).
 
-## Content (48 rows)
+## Content (47 rows)
 
 | Column | Meaning |
 |---|---|

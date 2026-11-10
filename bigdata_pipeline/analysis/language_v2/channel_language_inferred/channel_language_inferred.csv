@@ -653,6 +653,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1004981790,fa,1.0,1,inferred
 1004992244,fa,1.0,24,inferred
 1005014856,fa,1.0,18,inferred
+1005022355,ru,1.0,67,inferred
 1005034030,fa,1.0,1,inferred
 1005059599,fa,1.0,1,inferred
 1005076610,fa,1.0,1,inferred
@@ -668,6 +669,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1005148554,fa,1.0,87,inferred
 1005148761,fa,1.0,1,inferred
 1005152464,fa,1.0,8,inferred
+1005155016,en,1.0,4,inferred
 1005165389,fa,1.0,2,inferred
 1005168285,ru,1.0,96,inferred
 1005169711,fa,1.0,27,inferred
@@ -3136,7 +3138,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1060346490,ru,1.0,12,inferred
 1060374668,fa,1.0,19,inferred
 1060386901,ru,1.0,3,inferred
-1060405261,ru,0.9902,1230,inferred
+1060405261,ru,0.991,1229,inferred
 1060407657,fa,1.0,1,inferred
 1060440368,ru,1.0,15,inferred
 1060469602,ru,1.0,86,inferred
@@ -3288,7 +3290,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1062290934,fa,1.0,4,inferred
 1062313485,fa,1.0,2,inferred
 1062313785,ru,1.0,24,inferred
-1062315251,cannot determine,1.0,1,inferred
 1062315900,fa,1.0,1,inferred
 1062324912,fa,1.0,1,inferred
 1062396584,fa,1.0,1,inferred
@@ -4129,6 +4130,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1074592376,en,1.0,4,inferred
 1074614250,ru,1.0,6,inferred
 1074617941,fa,1.0,4,inferred
+1074650994,en,1.0,26,inferred
 1074657067,ru,1.0,4,inferred
 1074665896,ru,1.0,3,inferred
 1074668957,ru,1.0,2,inferred
@@ -4402,6 +4404,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1078010999,fa,1.0,1,inferred
 1078015815,fa,1.0,1,inferred
 1078017130,fa,1.0,1,inferred
+1078050187,ru,1.0,4,inferred
 1078055133,ru,1.0,6,inferred
 1078074846,ru,1.0,63,inferred
 1078098709,ru,1.0,2,inferred
@@ -5217,6 +5220,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1089094112,ru,1.0,1,inferred
 1089119494,en,0.8,10,inferred
 1089123828,ru,1.0,3,inferred
+1089124090,ru,1.0,34,inferred
 1089147988,ru,1.0,29,inferred
 1089165291,ru,1.0,1,inferred
 1089183868,fa,1.0,1,inferred
@@ -6050,6 +6054,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1100254386,ru,1.0,1,inferred
 1100276598,ru,1.0,2,inferred
 1100283819,uk,1.0,3,inferred
+1100293007,ru,1.0,161,inferred
 1100307556,ru,1.0,2,inferred
 1100313371,ru,1.0,2,inferred
 1100317545,ru,1.0,2,inferred
@@ -6424,6 +6429,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1103583369,fa,1.0,9,inferred
 1103586260,fa,1.0,146,inferred
 1103586413,fa,1.0,10,inferred
+1103586844,en,1.0,8,inferred
 1103590795,fa,1.0,3,inferred
 1103595865,ru,1.0,10,inferred
 1103604799,uk,0.8889,63,inferred
@@ -6840,6 +6846,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1107191450,ru,1.0,1,inferred
 1107192824,ru,1.0,6,inferred
 1107200986,ru,1.0,8,inferred
+1107205877,ru,1.0,1,inferred
 1107207243,ru,1.0,1,inferred
 1107213475,ru,1.0,1,inferred
 1107216145,ru,1.0,3,inferred
@@ -7878,6 +7885,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1116300841,ru,1.0,79,inferred
 1116311348,ru,1.0,3,inferred
 1116314238,ru,1.0,6,inferred
+1116320327,ru,1.0,289,inferred
 1116332957,ru,1.0,5,inferred
 1116347862,ru,1.0,60,inferred
 1116363721,fa,1.0,1,inferred
@@ -8752,6 +8760,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1123096771,ru,1.0,1,inferred
 1123105542,fa,1.0,1,inferred
 1123111640,en,1.0,1,inferred
+1123113569,ru,1.0,1,inferred
 1123119011,bg,1.0,1,inferred
 1123172016,ru,1.0,18,inferred
 1123187485,ru,0.9615,26,inferred
@@ -11243,6 +11252,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1140612919,ru,1.0,1,inferred
 1140615330,ru,1.0,1,inferred
 1140635550,ru,1.0,935,inferred
+1140651049,ru,1.0,3,inferred
 1140671301,ru,1.0,7,inferred
 1140695545,ru,1.0,14,inferred
 1140698806,ru,1.0,71,inferred
@@ -12945,7 +12955,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1152725091,ru,0.9474,19,inferred
 1152725282,bg,1.0,6,inferred
 1152743773,ru,1.0,4,inferred
-1152746101,en,0.8571,7,inferred
+1152746101,en,1.0,6,inferred
 1152748653,ru,1.0,24,inferred
 1152752100,ru,1.0,1,inferred
 1152755616,ru,1.0,3,inferred
@@ -14199,7 +14209,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1160357941,uk,0.8462,13,inferred
 1160364107,ru,1.0,1,inferred
 1160364205,ru,1.0,4,inferred
-1160380992,en,0.9402,117,inferred
+1160380992,en,0.9565,115,inferred
 1160383915,ru,1.0,83,inferred
 1160393556,ru,1.0,5,inferred
 1160396113,ru,1.0,1,inferred
@@ -16191,6 +16201,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1172253397,de,1.0,2,inferred
 1172258318,ru,1.0,3,inferred
 1172261127,fa,1.0,16,inferred
+1172262637,ru,1.0,1,inferred
 1172263716,ar,1.0,2,inferred
 1172268119,fa,1.0,1,inferred
 1172270011,ru,1.0,4,inferred
@@ -16820,6 +16831,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1176067820,ru,1.0,4,inferred
 1176083452,ru,1.0,3,inferred
 1176085348,ru,1.0,23,inferred
+1176085636,ru,1.0,1,inferred
 1176091704,fa,1.0,1,inferred
 1176094666,ru,1.0,8,inferred
 1176099589,ru,1.0,2,inferred
@@ -19481,6 +19493,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1193173055,ru,1.0,282,inferred
 1193176999,ru,1.0,9,inferred
 1193178381,ru,1.0,11,inferred
+1193180170,en,1.0,58,inferred
 1193183042,uk,0.9091,11,inferred
 1193191575,ru,1.0,10,inferred
 1193192741,ru,1.0,2,inferred
@@ -20963,7 +20976,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1202101630,ru,1.0,1,inferred
 1202108417,ru,1.0,1,inferred
 1202111850,ru,1.0,4,inferred
-1202113077,ru,0.9355,93,inferred
+1202113077,ru,1.0,87,inferred
 1202125159,ru,1.0,7,inferred
 1202126231,ru,1.0,2,inferred
 1202132457,ru,1.0,92,inferred
@@ -25821,6 +25834,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1231756147,ru,1.0,9,inferred
 1231756684,ru,1.0,481,inferred
 1231774661,fa,1.0,25,inferred
+1231774883,en,1.0,2,inferred
 1231776818,en,1.0,26,inferred
 1231777957,ru,1.0,1,inferred
 1231783699,ru,1.0,1,inferred
@@ -26552,6 +26566,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1236402286,ru,1.0,1,inferred
 1236416706,ru,1.0,4,inferred
 1236420979,ru,1.0,1,inferred
+1236445749,ru,1.0,26,inferred
 1236451178,ru,1.0,2,inferred
 1236459551,ru,1.0,4,inferred
 1236463843,de,1.0,1,inferred
@@ -26880,7 +26895,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1238288097,ru,1.0,13,inferred
 1238293616,ru,1.0,1,inferred
 1238295923,ru,1.0,5,inferred
-1238313270,cannot determine,1.0,4,inferred
 1238319895,ru,1.0,1,inferred
 1238326422,bg,1.0,2,inferred
 1238328670,de,1.0,9,inferred
@@ -27065,6 +27079,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1239439664,ru,1.0,99,inferred
 1239440165,ru,1.0,1,inferred
 1239451265,ru,1.0,1,inferred
+1239458811,ru,1.0,5,inferred
 1239463753,ru,1.0,10,inferred
 1239469087,ar,1.0,61,inferred
 1239475044,fa,1.0,1,inferred
@@ -27258,7 +27273,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1240567002,ru,1.0,1,inferred
 1240577155,uk,1.0,1,inferred
 1240580682,ru,1.0,1,inferred
-1240582843,en,0.908,326,inferred
+1240582843,en,0.9108,325,inferred
 1240593895,ru,1.0,9,inferred
 1240615007,en,1.0,1,inferred
 1240621148,ru,1.0,2,inferred
@@ -27694,7 +27709,8 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1243063410,ru,1.0,1,inferred
 1243066193,ru,0.987,77,inferred
 1243067372,ru,1.0,4,inferred
-1243068276,ru,0.9167,24,inferred
+1243068276,ru,1.0,22,inferred
+1243076085,ru,1.0,5,inferred
 1243079871,de,1.0,20,inferred
 1243086248,de,1.0,2,inferred
 1243087096,ru,1.0,1,inferred
@@ -28797,6 +28813,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1249649993,ru,1.0,39,inferred
 1249676345,ru,1.0,10,inferred
 1249691130,ru,1.0,1,inferred
+1249702211,en,0.9444,18,inferred
 1249710058,fa,1.0,1,inferred
 1249715101,en,1.0,4,inferred
 1249715918,ru,1.0,1,inferred
@@ -32858,6 +32875,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1274528786,ru,1.0,15,inferred
 1274538724,de,1.0,1,inferred
 1274543317,ru,1.0,2,inferred
+1274559734,ru,1.0,218,inferred
 1274565050,ru,1.0,1,inferred
 1274566247,de,1.0,5,inferred
 1274588291,ru,1.0,46,inferred
@@ -34340,6 +34358,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1283521260,ru,1.0,5,inferred
 1283523142,uk,0.937,254,inferred
 1283530203,ru,1.0,66,inferred
+1283534470,ru,1.0,1,inferred
 1283546644,de,1.0,48,inferred
 1283566574,ru,1.0,87,inferred
 1283570605,it,1.0,1,inferred
@@ -34425,6 +34444,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1283984507,ru,1.0,4,inferred
 1283988452,de,1.0,1,inferred
 1283989176,en,1.0,2,inferred
+1283992323,ru,1.0,64,inferred
 1283995753,ru,1.0,2,inferred
 1284005559,ru,1.0,1,inferred
 1284029883,de,1.0,1,inferred
@@ -34739,6 +34759,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1285950326,uk,0.9333,15,inferred
 1285951531,ru,1.0,5,inferred
 1285955973,ru,1.0,7,inferred
+1285967708,ru,1.0,1,inferred
 1285973580,ru,1.0,1,inferred
 1285985754,ru,1.0,5,inferred
 1285995193,en,1.0,46,inferred
@@ -35864,6 +35885,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1293179343,ru,1.0,33,inferred
 1293188816,de,1.0,5,inferred
 1293206154,ru,1.0,145,inferred
+1293241390,en,1.0,1,inferred
 1293269478,ru,1.0,606,inferred
 1293280019,ru,1.0,7,inferred
 1293283593,ru,1.0,1,inferred
@@ -35899,6 +35921,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1293490342,ru,0.8077,52,inferred
 1293490502,ru,1.0,12,inferred
 1293492760,ru,1.0,27,inferred
+1293493783,ru,1.0,4,inferred
 1293499156,en,1.0,2,inferred
 1293504890,ru,1.0,95,inferred
 1293506996,ru,1.0,28,inferred
@@ -37885,6 +37908,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1305775518,ru,1.0,8,inferred
 1305788258,ru,1.0,14,inferred
 1305791795,ru,1.0,2,inferred
+1305795976,en,1.0,5,inferred
 1305804929,ru,1.0,14,inferred
 1305810792,ru,1.0,4,inferred
 1305817193,ar,1.0,3,inferred
@@ -40887,6 +40911,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1324028836,ru,1.0,71,inferred
 1324029311,ru,1.0,7,inferred
 1324034290,ru,0.8793,58,inferred
+1324079501,ru,1.0,15,inferred
 1324080392,ru,1.0,40,inferred
 1324086929,ru,0.9997,3808,inferred
 1324090964,ru,1.0,1,inferred
@@ -43017,6 +43042,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1337187929,ru,1.0,24,inferred
 1337188730,ru,1.0,58,inferred
 1337188919,de,1.0,30,inferred
+1337191964,ru,1.0,429,inferred
 1337201021,ru,1.0,13,inferred
 1337210037,ru,1.0,78,inferred
 1337217993,ru,1.0,1,inferred
@@ -43260,6 +43286,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1338722246,en,1.0,11,inferred
 1338732205,ru,1.0,19,inferred
 1338732850,de,1.0,10,inferred
+1338742350,ru,1.0,1,inferred
 1338748887,ru,1.0,1,inferred
 1338751091,en,1.0,1,inferred
 1338757181,tr,1.0,1,inferred
@@ -46177,6 +46204,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1356012410,ru,1.0,17,inferred
 1356018242,ru,1.0,2,inferred
 1356020836,ru,1.0,137,inferred
+1356021122,ru,1.0,4,inferred
 1356021194,ru,1.0,66,inferred
 1356034811,ru,1.0,51,inferred
 1356037060,de,1.0,6,inferred
@@ -49444,6 +49472,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1376233119,ru,1.0,155,inferred
 1376245554,ru,1.0,19,inferred
 1376256036,ru,1.0,29,inferred
+1376258994,ru,1.0,6,inferred
 1376264484,ru,0.9649,57,inferred
 1376264795,uk,1.0,9,inferred
 1376274687,en,1.0,3,inferred
@@ -49892,7 +49921,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1378740031,en,1.0,43,inferred
 1378742156,it,0.8,10,inferred
 1378743091,en,1.0,2,inferred
-1378744956,ru,0.875,8,inferred
+1378744956,ru,1.0,7,inferred
 1378759358,en,1.0,10,inferred
 1378791791,ru,1.0,1,inferred
 1378801366,fa,1.0,2,inferred
@@ -50285,6 +50314,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1380959601,ru,1.0,2,inferred
 1380961363,ru,1.0,4,inferred
 1380961964,ru,1.0,84,inferred
+1380966150,ru,1.0,2,inferred
 1380971582,ru,1.0,7,inferred
 1380972498,ru,1.0,6,inferred
 1380990466,ru,1.0,3,inferred
@@ -52335,6 +52365,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1393363368,ru,1.0,35,inferred
 1393370152,de,1.0,56,inferred
 1393375355,ru,1.0,1,inferred
+1393380833,ru,1.0,3,inferred
 1393382035,en,1.0,2,inferred
 1393390275,ru,1.0,1,inferred
 1393398902,ru,1.0,16,inferred
@@ -54520,7 +54551,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1406604649,ru,1.0,2210,inferred
 1406608833,de,1.0,1,inferred
 1406611408,uk,1.0,4,inferred
-1406626412,ru,0.9726,475,inferred
+1406626412,ru,0.9957,464,inferred
 1406635772,uk,0.983,235,inferred
 1406642543,fa,1.0,1,inferred
 1406648704,uk,1.0,1,inferred
@@ -55190,7 +55221,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1410377575,ru,1.0,2,inferred
 1410379973,es,1.0,2,inferred
 1410388480,ru,1.0,183,inferred
-1410396381,ru,0.9892,93,inferred
+1410396381,ru,1.0,92,inferred
 1410408042,de,1.0,17,inferred
 1410413498,ru,1.0,4,inferred
 1410414753,ru,1.0,4,inferred
@@ -55625,6 +55656,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1412957693,ru,1.0,4,inferred
 1412959867,ru,1.0,1,inferred
 1412964347,de,1.0,15,inferred
+1412968833,ru,0.9641,167,inferred
 1412969007,ru,1.0,1,inferred
 1412978513,ru,1.0,1,inferred
 1412986046,de,1.0,78,inferred
@@ -55785,6 +55817,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1414032850,ru,1.0,1,inferred
 1414037302,ru,1.0,9,inferred
 1414039949,ru,1.0,1,inferred
+1414042881,ru,1.0,32,inferred
 1414048967,ru,1.0,36,inferred
 1414071631,en,1.0,2,inferred
 1414082829,bg,1.0,10,inferred
@@ -56522,6 +56555,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1418356524,ru,1.0,4,inferred
 1418357653,ru,1.0,4,inferred
 1418360240,de,1.0,173,inferred
+1418372558,en,1.0,1,inferred
 1418381324,ru,1.0,5,inferred
 1418382349,es,1.0,1,inferred
 1418384637,ru,1.0,42,inferred
@@ -61267,6 +61301,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1446899434,en,0.8,5,inferred
 1446910744,de,1.0,1,inferred
 1446911109,uk,0.9,20,inferred
+1446912922,ru,0.9333,120,inferred
 1446913475,en,1.0,5,inferred
 1446914527,uk,1.0,6,inferred
 1446924997,es,1.0,6,inferred
@@ -62983,7 +63018,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1457308793,ru,1.0,18,inferred
 1457310753,ru,1.0,9,inferred
 1457311066,ru,1.0,4,inferred
-1457319220,cannot determine,1.0,2,inferred
 1457325718,ru,1.0,124,inferred
 1457331876,en,1.0,1,inferred
 1457338697,ru,1.0,12,inferred
@@ -63054,7 +63088,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1457665782,ru,1.0,7,inferred
 1457672422,es,1.0,2,inferred
 1457682300,es,1.0,1,inferred
-1457688370,cannot determine,1.0,189,inferred
 1457696865,ru,1.0,531,inferred
 1457718718,ru,1.0,7,inferred
 1457739444,ru,1.0,6,inferred
@@ -64738,6 +64771,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1467874740,ru,1.0,1,inferred
 1467882623,en,1.0,2,inferred
 1467884925,ru,1.0,18,inferred
+1467893959,ru,1.0,6,inferred
 1467911439,ru,1.0,3,inferred
 1467918204,ru,1.0,3,inferred
 1467923467,de,1.0,7,inferred
@@ -69594,7 +69628,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1496770289,ru,1.0,16,inferred
 1496780594,ru,1.0,11,inferred
 1496786284,fa,1.0,2,inferred
-1496791274,en,0.975,40,inferred
+1496791274,en,1.0,39,inferred
 1496794744,ru,1.0,1,inferred
 1496801217,ru,0.9062,32,inferred
 1496802417,he,1.0,1,inferred
@@ -75294,6 +75328,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1525978059,ru,1.0,1,inferred
 1525989295,ru,1.0,4,inferred
 1525990393,ru,1.0,12,inferred
+1525993185,ru,1.0,2,inferred
 1525994340,de,1.0,6,inferred
 1525997518,ru,1.0,2,inferred
 1526000412,ru,1.0,16,inferred
@@ -82550,7 +82585,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1562118593,ru,1.0,2,inferred
 1562123549,ru,1.0,32,inferred
 1562124059,ru,1.0,9,inferred
-1562125116,cannot determine,0.9362,47,inferred
+1562125116,en,1.0,3,inferred
 1562125417,ru,1.0,19,inferred
 1562127599,ru,1.0,2,inferred
 1562140477,uk,1.0,2,inferred
@@ -85928,6 +85963,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1578289326,ru,1.0,6,inferred
 1578294221,ru,1.0,33,inferred
 1578303376,ru,1.0,22,inferred
+1578308065,ru,1.0,14,inferred
 1578315456,fa,1.0,1,inferred
 1578325489,ru,1.0,3,inferred
 1578326413,ru,1.0,1,inferred
@@ -86570,7 +86606,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1581670666,ru,1.0,1,inferred
 1581688635,ru,1.0,1,inferred
 1581692214,ru,1.0,1,inferred
-1581694593,ru,0.9981,523,inferred
+1581694593,ru,1.0,522,inferred
 1581699598,ru,1.0,4,inferred
 1581700693,ru,1.0,1,inferred
 1581710272,ru,1.0,1,inferred
@@ -90328,6 +90364,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1600376978,ru,1.0,4,inferred
 1600385266,ru,1.0,1,inferred
 1600399525,en,1.0,1,inferred
+1600405014,ru,1.0,1,inferred
 1600405160,ru,1.0,2,inferred
 1600407543,ru,1.0,2,inferred
 1600408353,ru,1.0,430,inferred
@@ -95702,6 +95739,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1622193783,ru,1.0,3,inferred
 1622199177,ru,1.0,1,inferred
 1622201250,ru,1.0,1,inferred
+1622201781,ru,1.0,11,inferred
 1622205518,ru,1.0,2,inferred
 1622217549,ru,1.0,85,inferred
 1622219966,ru,1.0,1,inferred
@@ -101221,6 +101259,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1644813879,ru,0.9091,11,inferred
 1644815119,ru,1.0,20,inferred
 1644815612,ru,1.0,3,inferred
+1644826103,ru,0.95,20,inferred
 1644829546,ru,1.0,1,inferred
 1644835942,ru,0.9933,300,inferred
 1644847244,ru,1.0,2,inferred
@@ -103895,7 +103934,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1655588600,ru,1.0,4,inferred
 1655590279,en,0.8889,9,inferred
 1655596406,uk,1.0,8,inferred
-1655602605,cannot determine,1.0,24,inferred
 1655605938,ru,1.0,1,inferred
 1655613732,ru,1.0,1,inferred
 1655614870,ru,1.0,2,inferred
@@ -104714,6 +104752,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1658905498,ru,1.0,4,inferred
 1658912429,ru,1.0,2,inferred
 1658915222,ru,1.0,2,inferred
+1658916921,ru,1.0,11,inferred
 1658919757,bg,1.0,109,inferred
 1658926627,ru,1.0,8,inferred
 1658935759,ru,1.0,4,inferred
@@ -107402,7 +107441,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1669919382,ru,1.0,1,inferred
 1669921023,ru,1.0,12,inferred
 1669923656,ru,1.0,4,inferred
-1669937261,cannot determine,1.0,1,inferred
 1669949619,ru,1.0,1,inferred
 1669959095,ru,1.0,3,inferred
 1669961911,ru,1.0,69,inferred
@@ -108005,7 +108043,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1672461176,ru,1.0,1,inferred
 1672468336,ru,1.0,17,inferred
 1672469812,ru,1.0,1,inferred
-1672471224,uk,0.9674,92,inferred
+1672471224,uk,0.978,91,inferred
 1672474771,ru,1.0,1,inferred
 1672480527,ru,1.0,10,inferred
 1672483466,ru,1.0,1,inferred
@@ -109608,6 +109646,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1679118432,ru,1.0,14,inferred
 1679121064,uk,1.0,7,inferred
 1679123051,ru,1.0,14,inferred
+1679132607,ru,1.0,475,inferred
 1679133473,ru,1.0,4,inferred
 1679134087,ru,1.0,22,inferred
 1679137501,ru,1.0,5,inferred
@@ -112420,6 +112459,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1690745878,ru,1.0,1,inferred
 1690764859,ru,1.0,159,inferred
 1690765797,ru,1.0,28,inferred
+1690767870,ru,1.0,1,inferred
 1690778707,en,1.0,5,inferred
 1690790357,de,1.0,5,inferred
 1690795457,ru,1.0,3,inferred
@@ -113072,7 +113112,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1693600056,ru,1.0,3,inferred
 1693600740,ru,1.0,3,inferred
 1693601401,ru,1.0,1,inferred
-1693601779,ru,0.9993,1511,inferred
+1693601779,ru,1.0,1510,inferred
 1693608974,ru,1.0,11,inferred
 1693609585,ru,1.0,5,inferred
 1693615363,ru,1.0,3,inferred
@@ -114703,6 +114743,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1700311620,de,1.0,5,inferred
 1700314725,ru,0.9932,146,inferred
 1700317282,uk,1.0,26,inferred
+1700318639,ru,1.0,1,inferred
 1700320039,en,1.0,21,inferred
 1700323306,ru,1.0,13,inferred
 1700325653,ru,1.0,1,inferred
@@ -114710,6 +114751,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1700328057,ru,1.0,30,inferred
 1700331769,mk,1.0,14,inferred
 1700342503,ru,1.0,95,inferred
+1700345103,en,0.877,187,inferred
 1700353301,ru,1.0,9,inferred
 1700356255,ru,1.0,45,inferred
 1700357397,ru,1.0,17,inferred
@@ -121977,7 +122019,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1729996176,ru,1.0,22,inferred
 1730007993,ru,1.0,1,inferred
 1730010213,ru,1.0,150,inferred
-1730011890,ru,0.9459,111,inferred
+1730011890,ru,0.9545,110,inferred
 1730016076,ru,0.8434,281,inferred
 1730017525,ru,1.0,48,inferred
 1730018759,ru,1.0,1,inferred
@@ -122736,6 +122778,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1733266003,ru,1.0,15,inferred
 1733269683,ru,1.0,1,inferred
 1733285540,ru,1.0,1,inferred
+1733286066,ru,1.0,10,inferred
 1733289703,ru,1.0,36,inferred
 1733293244,ru,1.0,10,inferred
 1733298524,ru,1.0,6,inferred
@@ -125807,6 +125850,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1745668200,de,1.0,30,inferred
 1745672626,ru,1.0,12,inferred
 1745674318,ru,1.0,20,inferred
+1745675214,ru,1.0,27,inferred
 1745681566,ru,1.0,65,inferred
 1745682829,ru,1.0,1,inferred
 1745685362,en,1.0,8,inferred
@@ -127597,6 +127641,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1753181766,ru,1.0,1,inferred
 1753182533,ru,1.0,1,inferred
 1753187843,ru,1.0,9,inferred
+1753191699,ru,1.0,16,inferred
 1753193343,ru,1.0,23,inferred
 1753195159,ru,1.0,375,inferred
 1753200898,ru,1.0,4,inferred
@@ -128817,6 +128862,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1758626132,en,1.0,5,inferred
 1758628678,ru,1.0,1,inferred
 1758650053,ru,1.0,4,inferred
+1758650061,ru,1.0,15,inferred
 1758665978,uk,1.0,4,inferred
 1758672880,ru,1.0,1,inferred
 1758681539,ru,1.0,30,inferred
@@ -130105,6 +130151,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1764975028,ru,1.0,18,inferred
 1764975364,ru,1.0,2,inferred
 1764993415,ru,1.0,4,inferred
+1764999613,en,1.0,1,inferred
 1765002472,uk,1.0,12,inferred
 1765006025,uk,1.0,1,inferred
 1765008757,ru,1.0,9,inferred
@@ -131234,7 +131281,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1770623862,ru,1.0,24,inferred
 1770626794,de,1.0,2,inferred
 1770627003,ru,1.0,3,inferred
-1770627135,en,0.9286,14,inferred
+1770627135,en,1.0,13,inferred
 1770627662,ru,1.0,1,inferred
 1770635053,ru,1.0,3,inferred
 1770641333,ru,1.0,18,inferred
@@ -138836,7 +138883,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1810299049,ru,1.0,1,inferred
 1810302235,ru,1.0,6,inferred
 1810306623,ru,1.0,1,inferred
-1810311273,ru,0.992,500,inferred
+1810311273,ru,0.994,499,inferred
 1810321036,fa,1.0,37,inferred
 1810321187,ru,1.0,10,inferred
 1810331710,ru,1.0,5,inferred
@@ -141160,7 +141207,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1825963954,ru,1.0,2,inferred
 1825964153,ru,1.0,8,inferred
 1825968358,ru,1.0,5,inferred
-1825971368,en,0.8611,36,inferred
+1825971368,en,1.0,31,inferred
 1825972253,ru,1.0,1,inferred
 1826007768,ru,1.0,15,inferred
 1826010161,en,1.0,9,inferred
@@ -142886,6 +142933,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1837441800,ru,1.0,7,inferred
 1837441821,ru,1.0,1,inferred
 1837445611,ru,1.0,1,inferred
+1837453079,ru,1.0,6,inferred
 1837461789,ru,1.0,9,inferred
 1837461997,ru,1.0,1,inferred
 1837462284,ru,1.0,15,inferred
@@ -146628,7 +146676,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1862383846,ru,1.0,8,inferred
 1862389059,en,1.0,1,inferred
 1862391906,ru,1.0,1,inferred
-1862403519,ru,0.9167,12,inferred
+1862403519,ru,1.0,11,inferred
 1862408342,ru,1.0,3,inferred
 1862416421,ru,1.0,4,inferred
 1862423212,ru,1.0,1,inferred
@@ -150586,6 +150634,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1888391169,ru,1.0,2,inferred
 1888391421,ru,1.0,4,inferred
 1888402899,ru,1.0,4,inferred
+1888419119,ru,1.0,3,inferred
 1888425145,ru,1.0,63,inferred
 1888431560,ru,1.0,2,inferred
 1888432040,ru,1.0,149,inferred
@@ -152101,7 +152150,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1898620836,ru,1.0,14,inferred
 1898627578,ru,1.0,2,inferred
 1898630436,uk,1.0,2,inferred
-1898641428,cannot determine,1.0,1,inferred
 1898650895,ru,1.0,3,inferred
 1898657378,ru,1.0,12,inferred
 1898658631,uk,1.0,7,inferred
@@ -157303,6 +157351,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1936858984,ru,1.0,1,inferred
 1936859184,ru,1.0,9,inferred
 1936872411,uk,1.0,1,inferred
+1936877412,ru,1.0,13,inferred
 1936884598,ru,1.0,1,inferred
 1936916053,ru,1.0,3,inferred
 1936916594,ru,1.0,3,inferred
@@ -160769,6 +160818,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1961965803,ru,1.0,2,inferred
 1961968711,ru,1.0,4,inferred
 1961975984,ru,1.0,4,inferred
+1961986461,ru,1.0,22,inferred
 1962011327,ru,1.0,4,inferred
 1962016474,en,1.0,61,inferred
 1962019393,en,1.0,2,inferred
@@ -161927,7 +161977,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 1970131442,ru,1.0,2,inferred
 1970134262,ru,1.0,20,inferred
 1970137755,uk,1.0,32,inferred
-1970159436,cannot determine,1.0,1,inferred
 1970167238,ru,1.0,14,inferred
 1970200730,ru,1.0,1,inferred
 1970203392,ru,1.0,73,inferred
@@ -171697,7 +171746,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2046338419,uk,1.0,1,inferred
 2046343505,ru,1.0,3,inferred
 2046346937,ru,1.0,1,inferred
-2046347608,cannot determine,1.0,4,inferred
 2046357091,ru,1.0,1,inferred
 2046367756,ru,1.0,6,inferred
 2046380168,ru,1.0,2,inferred
@@ -171897,7 +171945,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2047848855,ru,1.0,1,inferred
 2047857982,ru,1.0,12,inferred
 2047859308,ru,1.0,1,inferred
-2047885588,cannot determine,1.0,2,inferred
 2047894535,ru,1.0,1,inferred
 2047903128,en,1.0,2,inferred
 2047912025,ru,1.0,9,inferred
@@ -171921,6 +171968,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2048017971,ru,1.0,1,inferred
 2048024646,ru,1.0,1,inferred
 2048037970,ru,1.0,23,inferred
+2048052795,ru,1.0,9,inferred
 2048060720,ru,1.0,2,inferred
 2048064287,ru,1.0,1,inferred
 2048069318,ru,1.0,21,inferred
@@ -177394,6 +177442,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2090069440,ru,1.0,2,inferred
 2090070383,ru,1.0,23,inferred
 2090077262,ru,1.0,1,inferred
+2090105088,ru,1.0,6,inferred
 2090107982,ru,1.0,6,inferred
 2090112953,ru,1.0,1,inferred
 2090130884,fa,1.0,2,inferred
@@ -180360,6 +180409,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2115365190,ru,1.0,28,inferred
 2115408305,ru,1.0,1,inferred
 2115429714,en,1.0,3,inferred
+2115445178,en,1.0,3,inferred
 2115446552,en,1.0,15,inferred
 2115451807,ru,1.0,1,inferred
 2115462207,ru,1.0,50,inferred
@@ -182938,6 +182988,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2142928792,ru,1.0,2,inferred
 2142930419,ru,1.0,1,inferred
 2142931412,ru,1.0,64,inferred
+2142946460,ru,1.0,17,inferred
 2142960477,ru,1.0,6,inferred
 2142973030,ru,1.0,1,inferred
 2142987597,ru,1.0,95,inferred
@@ -184141,7 +184192,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2157933203,ru,1.0,4,inferred
 2157938340,de,1.0,9,inferred
 2157941267,en,1.0,16,inferred
-2157946984,cannot determine,0.8,10,inferred
+2157946984,en,1.0,2,inferred
 2157950330,ru,1.0,1,inferred
 2158003503,de,1.0,2,inferred
 2158003811,ru,1.0,1,inferred
@@ -185874,7 +185925,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2180088776,ru,1.0,14,inferred
 2180092844,ru,1.0,2,inferred
 2180106604,ru,1.0,70,inferred
-2180107893,ru,0.8,5,inferred
+2180107893,ru,1.0,4,inferred
 2180113788,ru,1.0,2,inferred
 2180116191,ru,1.0,1,inferred
 2180163447,ru,1.0,21,inferred
@@ -187513,7 +187564,7 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2201369870,ru,1.0,1,inferred
 2201398062,ru,1.0,11,inferred
 2201406876,ru,1.0,4,inferred
-2201413956,cannot determine,0.9767,43,inferred
+2201413956,en,1.0,1,inferred
 2201426078,ru,1.0,28,inferred
 2201426536,fr,0.8,5,inferred
 2201438779,ru,1.0,2,inferred
@@ -191605,7 +191656,6 @@ channel_id,inferred_language,vote_share,neighbour_forwards,source
 2416785435,uk,1.0,4,inferred
 2416894336,ru,1.0,66,inferred
 2417413342,ru,1.0,6,inferred
-2417423370,cannot determine,1.0,4,inferred
 2417911284,ru,1.0,1,inferred
 2418755945,en,1.0,6,inferred
 2419112090,ru,1.0,1,inferred

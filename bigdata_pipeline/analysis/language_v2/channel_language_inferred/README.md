@@ -8,7 +8,7 @@ Channels without a detected language for which a language was inferred (winning 
 
 Partition: `bigdata_pipeline/analysis/communities_v2/communities_leiden/communities_leiden.csv` (Leiden, detected without language). Language: `telescope_files/Channel_Language.csv`. Forwards: `telescope_pipeline_files/gold` (all months summed, self-loops removed, minimum weight 1).
 
-## Content (191,799 rows)
+## Content (191,849 rows)
 
 | Column | Meaning |
 |---|---|

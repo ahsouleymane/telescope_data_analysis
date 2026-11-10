@@ -8,7 +8,7 @@ For each language with at least 50 channels: how many communities it is spread o
 
 Partition: `bigdata_pipeline/analysis/communities_v2/communities_leiden/communities_leiden.csv` (Leiden, detected without language). Language: `telescope_files/Channel_Language.csv`. Forwards: `telescope_pipeline_files/gold` (all months summed, self-loops removed, minimum weight 1).
 
-## Content (15 rows)
+## Content (14 rows)
 
 | Column | Meaning |
 |---|---|
