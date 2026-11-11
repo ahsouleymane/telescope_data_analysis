@@ -4,14 +4,14 @@ One row per Leiden community: size, forwards leaving, entering and staying insid
 
 ## How it was generated
 
-`community_detection_v2.py`, run on 2026-11-10.
+`community_detection_v2.py`, run on 2026-11-11.
 
 - Input: monthly edges `telescope_pipeline_files/gold` (6,880,522 (origin, destination, month) rows).
 - Graph: forwards summed over all months, self-loops removed, pairs with fewer than 1 forward(s) dropped.
 - Leiden: modularity objective, resolution 1.0, seed 42, weights = number of forwards, A->B and B->A summed (undirected).
 - Infomap: directed, weights = number of forwards, 1 trial(s).
 
-## Content (993 rows)
+## Content (822 rows)
 
 | Column | Meaning |
 |---|---|

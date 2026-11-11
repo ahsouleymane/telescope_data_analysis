@@ -1,0 +1,8 @@
+measure,original_posts,share_of_posts,relays,share_of_relays,meaning
+origin_channel_in_corpus,16643874,0.8095,26964099,0.8504,the source channel has messages in the dataset
+origin_post_found,8927592,0.4342,14922660,0.4707,the original post itself is in the dataset
+origin_post_missing_channel_present,7716282,0.3753,12041439,0.3798,"channel in the dataset but this post is not (deleted, outside the collected period, or never collected)"
+origin_channel_not_in_corpus,3917054,0.1905,4741816,0.1496,the source channel was never collected: traceable to its id only
+date_identical,8927253,0.4342,14922235,0.4706,the header date equals the date of the post found
+date_within_60s,8927490,0.4342,14922528,0.4707,the header date is within one minute of the post found
+date_differs,102,0.0,132,0.0,header date and post date differ by more than one minute (to inspect)

@@ -1,0 +1,9 @@
+delay_class,relays,share_of_relays,first_relays,share_of_first_relays
+before the original (negative),0,0.0,0,0.0
+under 1 min,4085461,0.1289,3279976,0.1595
+1 to 10 min,6080174,0.1918,4528123,0.2202
+10 to 60 min,6943860,0.219,4457848,0.2168
+1 to 24 h,11735829,0.3701,6655670,0.3237
+1 to 7 days,2011934,0.0635,1159221,0.0564
+7 to 30 days,379870,0.012,216043,0.0105
+over 30 days,468787,0.0148,264047,0.0128

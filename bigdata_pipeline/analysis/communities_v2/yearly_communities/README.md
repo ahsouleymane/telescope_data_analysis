@@ -4,7 +4,7 @@ One Leiden partition per year (same parameters) and its similarity to the previo
 
 ## How it was generated
 
-`community_detection_v2.py`, run on 2026-11-10.
+`community_detection_v2.py`, run on 2026-11-11.
 
 - Input: monthly edges `telescope_pipeline_files/gold` (6,880,522 (origin, destination, month) rows).
 - Graph: forwards summed over all months, self-loops removed, pairs with fewer than 1 forward(s) dropped.

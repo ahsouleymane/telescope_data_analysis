@@ -25,7 +25,8 @@ def main():
     ap.add_argument("--clean", type=Path, default=None)
     ap.add_argument("--csv", action="store_true", help="also write a single CSV file")
     args = ap.parse_args()
-    clean = args.clean or args.out / "clean"
+    from spark_session import default_clean
+    clean = args.clean or default_clean(args.out)       # clean_dedup/ when job1b_dedup.py has been run
 
     from pyspark.sql import functions as F
     from spark_session import get_spark

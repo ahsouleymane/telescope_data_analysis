@@ -1,0 +1,14 @@
+measure,value
+relays_after_deduplication,31705915.0
+original_posts,20560928.0
+origin_channels,260256.0
+relaying_channels,60769.0
+mean_relays_per_post,1.542
+median_relays_per_post,1.0
+max_relays_per_post,4809.0
+posts_with_one_relay_share,0.7708
+median_first_relay_delay_s,1676.0
+relays_within_1h_share,0.5396
+relays_before_original,0.0
+raw_relays,31705915.0
+duplicated_relays_removed,0.0

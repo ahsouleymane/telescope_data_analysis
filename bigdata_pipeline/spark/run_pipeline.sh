@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Whole pipeline: raw data -> clean Parquet -> chains, monthly edges, channel stats.
+# Whole pipeline: raw data -> clean Parquet -> deduplicated messages -> chains, monthly edges, channel stats.
 #
 # Usage:  bigdata/spark/run_pipeline.sh <raw_dir_or_zips> <out_dir>
 # Example: bigdata/spark/run_pipeline.sh /media/0EFC061CFC05FF29/telescope_raw ~/telescope_v2
@@ -12,6 +12,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 export TELESCOPE_CORES="${TELESCOPE_CORES:-3}"
 
 python3 "$HERE/job1_clean.py"  --raw "$RAW" --out "$OUT"
+python3 "$HERE/job1b_dedup.py" --out "$OUT"
 python3 "$HERE/job2_chains.py" --out "$OUT"
 python3 "$HERE/job3_edges.py"  --out "$OUT" --csv
 python3 "$HERE/job4_stats.py"  --out "$OUT" --csv

@@ -8,7 +8,7 @@ For each community: dominant language among its channels with a known language, 
 
 Partition: `bigdata_pipeline/analysis/communities_v2/communities_leiden/communities_leiden.csv` (Leiden, detected without language). Language: `telescope_files/Channel_Language.csv`. Forwards: `telescope_pipeline_files/gold` (all months summed, self-loops removed, minimum weight 1).
 
-## Content (993 rows)
+## Content (822 rows)
 
 | Column | Meaning |
 |---|---|

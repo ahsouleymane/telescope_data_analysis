@@ -1,0 +1,5 @@
+level,meaning,messages,share_of_forwards
+A,"forwarded from a channel, original post known (traceable to the post)",31705915,0.96047
+B,"forwarded from a channel, original post id missing (traceable to the channel)",104925,0.00318
+C,forwarded from a user (source is a person),547048,0.01657
+D,origin hidden by Telegram privacy (source unknown),652957,0.01978

@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-10",
+  "date": "2026-11-11",
   "tables": [
     "communities_leiden",
     "communities_infomap",
@@ -11,17 +11,17 @@
     "resolution_curve",
     "community_names"
   ],
-  "seconds": 1144,
+  "seconds": 1066,
   "args": {
     "gold": "telescope_pipeline_files/gold",
-    "out": "communities_v2",
-    "figdir": "figures/community_detection_v2",
+    "out": "bigdata_pipeline/analysis/communities_v2",
+    "figdir": "bigdata_pipeline/analysis/figures/community_detection",
     "resolution": "1.0",
     "seed": "42",
     "min_weight": "1",
     "infomap_trials": "1",
     "skip_infomap": "False",
-    "reuse_leiden": "True",
+    "reuse_leiden": "False",
     "seed_baseline": "True",
     "skip_yearly": "False",
     "resolution_curve": "True",

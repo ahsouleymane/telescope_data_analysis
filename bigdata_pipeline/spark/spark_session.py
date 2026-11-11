@@ -27,11 +27,11 @@ def get_spark(app="telescope"):
     memory = os.environ.get("TELESCOPE_SPARK_MEMORY", "4g")
     tmp = os.environ.get("TELESCOPE_SPARK_TMP", os.path.expanduser("~/spark_tmp"))
     os.makedirs(tmp, exist_ok=True)
-    os.environ["SPARK_LOCAL_DIRS"] = tmp
 
     spark = (
         SparkSession.builder.master(f"local[{cores}]").appName(app)
         .config("spark.driver.memory", memory)
+        .config("spark.local.dir", tmp)
         .config("spark.sql.session.timeZone", "UTC")
         .config("spark.sql.shuffle.partitions", os.environ.get("TELESCOPE_SHUFFLE_PARTITIONS", "48"))
         .config("spark.python.worker.reuse", "true")
@@ -40,3 +40,14 @@ def get_spark(app="telescope"):
     )
     spark.sparkContext.setLogLevel("WARN")
     return spark
+
+
+def default_clean(out):
+    """Folder the jobs 2-4 read: the deduplicated messages when job1b_dedup.py has produced them, else the raw clean/."""
+    from pathlib import Path
+    out = Path(out)
+    dedup = out / "clean_dedup"
+    if dedup.exists():
+        return dedup
+    print("WARNING: reading clean/ with duplicated messages; run job1b_dedup.py first", file=sys.stderr)
+    return out / "clean"
