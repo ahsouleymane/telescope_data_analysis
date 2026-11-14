@@ -1,0 +1,30 @@
+country,city,utc_offset,n_channels,peak_hour_in_file,peak_if_file_is_utc_local_hour,daily_cycle_strength,verdict
+Belarus,Minsk,3.0,59,12.45,15.45,0.475,inconclusive
+Iran,Tehran,3.5,43,11.46,14.96,0.38,inconclusive
+Russia,Chelyabinsk,5.0,93,10.09,15.09,0.515,inconclusive
+Russia,Irkutsk,8.0,124,7.27,15.27,0.479,inconclusive
+Russia,Kazan,3.0,81,11.51,14.51,0.543,inconclusive
+Russia,Khabarovsk,10.0,171,4.77,14.77,0.482,inconclusive
+Russia,Krasnodar,3.0,186,11.74,14.74,0.528,inconclusive
+Russia,Krasnoyarsk,7.0,120,7.97,14.97,0.518,inconclusive
+Russia,Moscow,3.0,683,12.03,15.03,0.507,inconclusive
+Russia,Nizhny Novgorod,3.0,53,12.26,15.26,0.447,inconclusive
+Russia,Novosibirsk,7.0,82,8.07,15.07,0.498,inconclusive
+Russia,Omsk,6.0,101,9.22,15.22,0.497,inconclusive
+Russia,Perm,5.0,70,10.29,15.29,0.504,inconclusive
+Russia,Rostov-on-Don,3.0,133,11.84,14.84,0.496,inconclusive
+Russia,Saint Petersburg,3.0,479,12.24,15.24,0.496,inconclusive
+Russia,Samara,4.0,74,11.21,15.21,0.468,inconclusive
+Russia,Saratov,4.0,73,11.03,15.03,0.478,inconclusive
+Russia,Sevastopol,3.0,172,11.91,14.91,0.484,inconclusive
+Russia,Tyumen,5.0,97,10.11,15.11,0.529,inconclusive
+Russia,Ufa,5.0,54,10.78,15.78,0.469,inconclusive
+Russia,Vladivostok,10.0,91,5.19,15.19,0.411,inconclusive
+Russia,Volgograd,3.0,109,11.67,14.67,0.515,inconclusive
+Russia,Voronezh,3.0,124,11.8,14.8,0.506,inconclusive
+Russia,Yekaterinburg,5.0,86,10.27,15.27,0.472,inconclusive
+Ukraine,Donetsk,2.0,262,11.85,13.85,0.469,inconclusive
+Ukraine,Kharkiv,2.0,95,12.37,14.37,0.415,inconclusive
+Ukraine,Kyiv,2.0,90,12.12,14.12,0.409,inconclusive
+Ukraine,Luhansk,2.0,98,11.86,13.86,0.497,inconclusive
+Ukraine,Odesa,2.0,38,12.03,14.03,0.428,inconclusive

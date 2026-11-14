@@ -17,7 +17,7 @@ Analyses (every table is a folder with its CSV and a README, images go to --figd
                                 against the share expected if forwards ignored language
   4. language_flows             language -> language forwards (top pairs)
   5. language_spread            how many communities each language is split over
-  6. inference_accuracy / channel_language_inferred
+  6. inference_accuracy / channel_language_inferred / channel_language_votes
                                 language of unlabelled channels guessed from their neighbours,
                                 with accuracy measured by hiding known labels (holdout)
                                 Inferred values are labelled 'inferred' and never replace the detected ones.
@@ -218,7 +218,7 @@ def infer_languages(net, lang_by_node, min_class=50, holdout=0.1, min_vote=0.6, 
     counts = s.dropna().value_counts()
     classes = counts[counts >= min_class].index.tolist()
     if len(classes) < 2:
-        return None, None
+        return None, None, None
     cidx = {c: i for i, c in enumerate(classes)}
     cls = np.array([cidx.get(x, -1) if isinstance(x, str) else -1 for x in lang_by_node])
     A = sparse.coo_matrix((np.r_[net.w, net.w], (np.r_[net.src, net.dst], np.r_[net.dst, net.src])), shape=(n, n)).tocsr()
@@ -266,7 +266,23 @@ def infer_languages(net, lang_by_node, min_class=50, holdout=0.1, min_vote=0.6, 
     keep = h2 & (sh2 >= min_vote)
     inf = pd.DataFrame({"channel_id": net.nodes[unk][keep], "inferred_language": [classes[i] for i in V2[unk][keep].argmax(axis=1)],
                         "vote_share": sh2[keep].round(4), "neighbour_forwards": t2[keep].astype(int), "source": "inferred"})
-    return acc, inf
+    # unresolved channels: some neighbours have a known language but no language reaches min_vote
+    res = np.where(h2 & ~keep)[0]
+    Vr = V2[unk][res]
+    order = np.argsort(-Vr, axis=1)[:, :3]
+    tr = t2[res]
+    data = {"channel_id": net.nodes[unk][res], "n_voting_languages": (Vr > 0).sum(axis=1)}
+    top_total = np.zeros(len(res))
+    for k in range(min(3, len(classes))):
+        v = np.take_along_axis(Vr, order[:, [k]], axis=1)[:, 0]
+        present = v > 0
+        data[f"language_{k + 1}"] = [classes[j] if p else "" for j, p in zip(order[:, k], present)]
+        data[f"share_{k + 1}"] = np.where(present, v / tr, 0.0).round(4)
+        top_total += np.where(present, v / tr, 0.0)
+    data["share_other"] = np.clip(1 - top_total, 0, 1).round(4)
+    data["neighbour_forwards"] = tr.astype(int)
+    votes = pd.DataFrame(data).sort_values("neighbour_forwards", ascending=False).reset_index(drop=True)
+    return acc, inf, votes
 
 
 
@@ -671,9 +687,9 @@ def analyse(args):
              "share_in_largest": "share of its channels in that community",
              "communities_for_80pct": "communities needed to cover 80% of its channels"})
 
-    acc = inf = None
+    acc = inf = votes = None
     if not args.skip_inference:
-        acc, inf = infer_languages(net, lang_by_node, args.min_class, 0.1, args.min_vote, args.seed)
+        acc, inf, votes = infer_languages(net, lang_by_node, args.min_class, 0.1, args.min_vote, args.seed)
         if acc is not None:
             W.table("inference_accuracy", acc[["row", "vote_share_from", "vote_share_to", "held_out_channels", "accuracy",
                                                "baseline_majority_language", "held_out_total", "with_known_neighbour"]],
@@ -690,6 +706,19 @@ def analyse(args):
                     {"channel_id": "Telegram channel id", "inferred_language": "guessed language code",
                      "vote_share": "share of neighbour forwards coming from that language",
                      "neighbour_forwards": "total forwards with neighbours of a known language", "source": "always 'inferred'"})
+            W.table("channel_language_votes", votes,
+                    "Channels that have NO language in Channel_Language.csv and none in channel_language_inferred: at least one "
+                    "forwarding partner has a known language, but no language reaches the minimum vote share "
+                    f"({args.min_vote}). For each, the three best-voted languages with their share of the neighbour forwards. "
+                    "A mixed audience shows up as several shares of similar size. Channels with no partner of a known language "
+                    "are not listed (nothing to vote on). Only languages with at least "
+                    f"{args.min_class} known channels take part in the vote.",
+                    {"channel_id": "Telegram channel id", "n_voting_languages": "number of languages with at least one vote",
+                     "language_1": "best-voted language code", "share_1": "its share of the neighbour forwards",
+                     "language_2": "second language code (empty if none)", "share_2": "its share",
+                     "language_3": "third language code (empty if none)", "share_3": "its share",
+                     "share_other": "share of the remaining languages (1 - share_1 - share_2 - share_3)",
+                     "neighbour_forwards": "total forwards with neighbours of a known language"})
 
     yr = byl = None
     if not args.skip_yearly:
@@ -750,7 +779,7 @@ def analyse(args):
         extra_charts(args.figdir, yr, byl, br, act)
         write_readme(args.figdir)
     print("done")
-    return {"summary": ag, "purity": pur, "homophily": hom, "inferred": inf, "accuracy": acc, "tables": W.tables,
+    return {"summary": ag, "purity": pur, "homophily": hom, "inferred": inf, "votes": votes, "accuracy": acc, "tables": W.tables,
             "yearly": yr, "yearly_by_language": byl, "bridges": br, "activity": act}
 
 
@@ -809,6 +838,13 @@ def selftest(_args):
         assert (r["inferred"].source == "inferred").all() and len(r["inferred"]) > 0
         known = set(ids[lang != ""])
         assert not (set(r["inferred"].channel_id) & known), "inference must only cover unlabelled channels"
+        vt = r["votes"]
+        assert vt is not None and len(vt) > 0
+        assert not (set(vt.channel_id) & known) and not (set(vt.channel_id) & set(r["inferred"].channel_id))
+        assert (vt.share_1 < 0.6).all(), "unresolved channels must be below the minimum vote"
+        assert (vt.share_1 >= vt.share_2).all() and (vt.share_2 >= vt.share_3).all()
+        assert ((vt.share_1 + vt.share_2 + vt.share_3 + vt.share_other - 1).abs() < 0.01).all()
+        assert (vt.n_voting_languages >= 1).all()
         for name in r["tables"]:
             assert (t / "out" / name / f"{name}.csv").exists() and (t / "out" / name / "README.md").exists()
         for f in ("language_distribution", "community_purity", "language_homophily",

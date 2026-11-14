@@ -1,0 +1,8 @@
+metric,value,share_of_metadata_channels
+metadata channels,534136,1.0
+with a language in Channel_Language.csv,70741,0.1324
+language found from the title only,23717,0.0444
+direct city (channel language),4250,0.008
+direct city (title language),1281,0.0024
+city from neighbours,33675,0.063
+"channels with a city, any method",39191,0.0734
