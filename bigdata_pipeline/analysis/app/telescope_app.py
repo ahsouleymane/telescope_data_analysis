@@ -1,13 +1,14 @@
-"""TeleScope v2 - Streamlit viewer for the analysis results (themes 1 to 4).
+"""TeleScope v2 - Streamlit viewer and general report of the analysis (themes 1 to 5).
 
 Read-only: the app reads the CSV / PNG / README files already written in
-bigdata_pipeline/analysis/ and recomputes nothing.
+bigdata_pipeline/analysis/ and the Parquet datasets of telescope_pipeline_files/, and recomputes nothing.
+Every figure shown is read from those files; nothing is typed by hand.
 
 Run (from the project root, venv active):
     pip install streamlit
     streamlit run bigdata_pipeline/analysis/app/telescope_app.py
 Other analysis folder:
-    streamlit run bigdata_pipeline/analysis/app/telescope_app.py -- --analysis path/to/analysis
+    streamlit run bigdata_pipeline/analysis/app/telescope_app.py -- --analysis path/to/analysis --data path/to/pipeline_files
 """
 from __future__ import annotations
 
@@ -19,15 +20,22 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from telescope_captions import describe, title_of
+from telescope_captions import HEADLINES, describe, generic_caption, title_of
+from telescope_catalog import (FORMULAS, GLOBAL_LIMITS, LEVEL_NAMES, flagged_channels, PARQUET_INFO, REFERENCES, TABLE_INFO, THEME_TEXT, describe_parquet, describe_table,
+                               discover_parquets, fmt_bytes, parquet_info, parquet_preview)
 
 # ----------------------------------------------------------------- configuration
-THEMES = {   # page id -> folders under the analysis directory (fixed layout, no search)
-    "theme1": {"tables": ["communities_v2"], "figures": ["figures/community_detection"]},
-    "theme2": {"tables": ["language_v2"], "figures": ["figures/language_communities"]},
-    "theme3": {"tables": ["tracing"], "figures": ["figures/traceability"]},
+THEMES = {   # page id -> folders under the analysis directory (fixed layout, no search) and Parquet datasets used
+    "theme1": {"tables": ["communities_v2"], "figures": ["figures/community_detection"],
+               "parquets": ["edges_monthly", "channel_stats"]},
+    "theme2": {"tables": ["language_v2"], "figures": ["figures/language_communities"],
+               "parquets": ["channel_stats", "edges_monthly"]},
+    "theme3": {"tables": ["tracing"], "figures": ["figures/traceability"], "parquets": ["chains"]},
     "theme4": {"tables": ["geo", "anomalies"], "figures": ["figures/geo", "figures/anomalies"],
-               "maps": "figures/anomalies"},
+               "maps": "figures/anomalies", "parquets": ["city_daily", "city_hourly"]},
+    "theme5": {"tables": ["suspicious"], "figures": ["figures/suspicious"],
+               "parquets": ["channel_behavior", "channel_hours", "coordinated_pairs", "cascades",
+                            "forward_speed_monthly", "chains"]},
 }
 # figures checked during the analyses (after deduplication): label key -> value
 PIPELINE_KPI = [
@@ -74,6 +82,109 @@ TEXT = {
               "concentration of sources.",
         "ru": "Уровни прослеживаемости A/B/C/D, проверка источника по корпусу, размеры цепочек, "
               "задержки и концентрация источников."},
+    "theme5_title": {"fr": "Thème 5 — Tendances suspectes de diffusion", "en": "Theme 5 — Suspicious broadcasting trends",
+                     "ru": "Тема 5 — Подозрительные тенденции распространения"},
+    "theme5_intro": {
+        "fr": "Comportements de diffusion atypiques : relais instantanés, source unique, groupes de chaînes coordonnées, "
+              "et hausse des relais rapides. Ces mesures décrivent des comportements, pas des intentions.",
+        "en": "Atypical broadcasting behaviour: instant relays, single source, coordinated groups of channels, "
+              "and the rise of fast relays. These measures describe behaviour, not intent.",
+        "ru": "Нетипичное поведение распространения: мгновенные пересылки, один источник, координированные группы каналов "
+              "и рост быстрых пересылок. Эти меры описывают поведение, а не намерения."},
+    "page_report": {"fr": "Rapport général", "en": "General report", "ru": "Общий отчёт"},
+    "page_catalog": {"fr": "Catalogue des fichiers", "en": "File catalogue", "ru": "Каталог файлов"},
+    "report_title": {"fr": "TeleScope v2 — Rapport général", "en": "TeleScope v2 — General report",
+                     "ru": "TeleScope v2 — Общий отчёт"},
+    "report_intro": {
+        "fr": "Cette application est le rapport du projet : elle présente, thème par thème, ce qui a été cherché, comment, "
+              "ce qui en ressort (chiffres lus dans les fichiers produits) et jusqu'où on peut s'y fier. "
+              "Chaque graphe, chaque carte, chaque tableau CSV et chaque jeu de données Parquet est décrit.",
+        "en": "This application is the project report: for each theme it shows what was looked for, how, what comes out of it "
+              "(figures read from the files produced) and how far it can be trusted. "
+              "Every chart, map, CSV table and Parquet dataset is described.",
+        "ru": "Это приложение — отчёт по проекту: по каждой теме показано, что искали, как, что получилось "
+              "(цифры читаются из созданных файлов) и насколько этому можно доверять. "
+              "Описан каждый график, карта, CSV-таблица и набор данных Parquet."},
+    "report_howto": {
+        "fr": "Chaque page thème a cinq onglets : **Synthèse** (objectif, méthode, résultats chiffrés, limites), **Graphes**, "
+              "**Tableaux**, **Cartes** (thème 4) et **Fichiers** (pourquoi chaque fichier existe et ce qu'il contient).",
+        "en": "Each theme page has five tabs: **Summary** (goal, method, figures, limits), **Charts**, **Tables**, "
+              "**Maps** (theme 4) and **Files** (why each file exists and what it holds).",
+        "ru": "На странице каждой темы пять вкладок: **Сводка** (цель, метод, цифры, ограничения), **Графики**, "
+              "**Таблицы**, **Карты** (тема 4) и **Файлы** (зачем создан каждый файл и что в нём)."},
+    "tab_summary": {"fr": "Synthèse", "en": "Summary", "ru": "Сводка"},
+    "tab_files": {"fr": "Fichiers", "en": "Files", "ru": "Файлы"},
+    "formulas": {"fr": "Formules et explications", "en": "Formulas and explanations", "ru": "Формулы и пояснения"},
+    "formulas_note": {"fr": "Les valeurs numériques citées (seuils, fenêtres) sont les valeurs par défaut des scripts ; "
+                            "celles réellement utilisées figurent dans les tableaux de résultats.",
+                      "en": "The numerical values quoted (thresholds, windows) are the scripts' defaults; "
+                            "the ones really used are in the result tables.",
+                      "ru": "Приведённые числа (пороги, окна) — значения скриптов по умолчанию; "
+                            "реально использованные указаны в таблицах результатов."},
+    "flagged_title": {"fr": "Chaînes signalées et niveau de suspicion", "en": "Flagged channels and level of suspicion",
+                      "ru": "Отмеченные каналы и уровень подозрительности"},
+    "flagged_note": {
+        "fr": "Une tendance suspecte est un comportement atypique de diffusion, pas forcément malveillant. Le niveau de suspicion "
+              "vient du nombre d'indicateurs déclenchés : **élevé** = 3 indicateurs ou plus, **moyen** = 2, **faible** = 1. "
+              "Les indicateurs se recoupent : le niveau sert à trier, il ne prouve rien sur l'intention de la chaîne.",
+        "en": "A suspicious trend is atypical broadcasting behaviour, not necessarily malicious. The level of suspicion "
+              "comes from the number of indicators triggered: **high** = 3 or more, **medium** = 2, **low** = 1. "
+              "Indicators overlap: the level sorts, it proves nothing about the channel's intent.",
+        "ru": "Подозрительная тенденция — это нетипичное поведение распространения, не обязательно злонамеренное. Уровень "
+              "определяется числом сработавших индикаторов: **высокий** — 3 и более, **средний** — 2, **низкий** — 1. "
+              "Индикаторы пересекаются: уровень нужен для сортировки и ничего не доказывает о намерениях канала."},
+    "flagged_counts": {"fr": "{n} chaînes dans la liste : {high} de niveau élevé, {medium} moyen, {low} faible.",
+                       "en": "{n} channels in the list: {high} high, {medium} medium, {low} low.",
+                       "ru": "{n} каналов в списке: высокий — {high}, средний — {medium}, низкий — {low}."},
+    "level_filter": {"fr": "Niveau de suspicion", "en": "Level of suspicion", "ru": "Уровень подозрительности"},
+    "level_all": {"fr": "Tous", "en": "All", "ru": "Все"},
+    "flagged_top": {"fr": "Chaînes affichées", "en": "Channels shown", "ru": "Показано каналов"},
+    "flagged_missing": {"fr": "Le tableau suspicious_channels est introuvable : lancez suspicious_trends.py.",
+                        "en": "The suspicious_channels table was not found: run suspicious_trends.py.",
+                        "ru": "Таблица suspicious_channels не найдена: запустите suspicious_trends.py."},
+    "goal": {"fr": "Objectif", "en": "Goal", "ru": "Цель"},
+    "method": {"fr": "Méthode", "en": "Method", "ru": "Метод"},
+    "limits": {"fr": "Limites", "en": "Limits", "ru": "Ограничения"},
+    "results": {"fr": "Résultats chiffrés", "en": "Figures", "ru": "Цифры"},
+    "no_figures": {"fr": "Aucun chiffre disponible : les tableaux de ce thème sont introuvables. Lancez les scripts du thème.",
+                   "en": "No figure available: the tables of this theme were not found. Run the theme's scripts.",
+                   "ru": "Цифр нет: таблицы этой темы не найдены. Запустите скрипты темы."},
+    "no_caption": {"fr": "Description non renseignée pour ce graphe.", "en": "No description for this chart.",
+                   "ru": "Для этого графика нет описания."},
+    "global_limits": {"fr": "Limites générales", "en": "General limits", "ru": "Общие ограничения"},
+    "references": {"fr": "Références des méthodes", "en": "Method references", "ru": "Источники методов"},
+    "data_dir": {"fr": "Dossier des données du pipeline", "en": "Pipeline data folder", "ru": "Папка данных конвейера"},
+    "files_intro": {"fr": "Pourquoi chaque fichier a été produit et ce qu'il contient. Choisissez un fichier pour le détail.",
+                    "en": "Why each file was produced and what it holds. Pick a file for details.",
+                    "ru": "Зачем создан каждый файл и что в нём. Выберите файл для подробностей."},
+    "catalog_intro": {"fr": "Tous les CSV du dossier d'analyse et tous les jeux de données Parquet du pipeline.",
+                      "en": "Every CSV of the analysis folder and every Parquet dataset of the pipeline.",
+                      "ru": "Все CSV папки анализа и все наборы данных Parquet конвейера."},
+    "csv_files": {"fr": "Tableaux CSV", "en": "CSV tables", "ru": "CSV-таблицы"},
+    "parquet_files": {"fr": "Jeux de données Parquet", "en": "Parquet datasets", "ru": "Наборы данных Parquet"},
+    "pick_file": {"fr": "Fichier", "en": "File", "ru": "Файл"},
+    "purpose": {"fr": "Pourquoi", "en": "Why", "ru": "Зачем"},
+    "result": {"fr": "Résultat", "en": "Result", "ru": "Результат"},
+    "undocumented": {"fr": "Description non renseignée : seuls les chiffres lus dans le fichier sont donnés.",
+                     "en": "No description recorded: only the figures read from the file are given.",
+                     "ru": "Описание не записано: даны только цифры, прочитанные из файла."},
+    "col_file": {"fr": "Fichier", "en": "File", "ru": "Файл"},
+    "col_folder": {"fr": "Dossier", "en": "Folder", "ru": "Папка"},
+    "col_size": {"fr": "Taille", "en": "Size", "ru": "Размер"},
+    "col_purpose": {"fr": "Pourquoi", "en": "Why", "ru": "Зачем"},
+    "col_name": {"fr": "Colonne", "en": "Column", "ru": "Столбец"},
+    "col_type": {"fr": "Type", "en": "Type", "ru": "Тип"},
+    "columns_title": {"fr": "Colonnes", "en": "Columns", "ru": "Столбцы"},
+    "preview": {"fr": "Aperçu (premières lignes)", "en": "Preview (first rows)", "ru": "Просмотр (первые строки)"},
+    "n_parts": {"fr": "{n} fichiers Parquet, {size}", "en": "{n} Parquet files, {size}", "ru": "Файлов Parquet: {n}, {size}"},
+    "no_parquet": {"fr": "Aucun jeu de données Parquet trouvé dans `{path}` (clean, clean_dedup, gold/). "
+                         "Indiquez le dossier des données du pipeline dans la barre latérale.",
+                   "en": "No Parquet dataset found in `{path}` (clean, clean_dedup, gold/). "
+                         "Set the pipeline data folder in the sidebar.",
+                   "ru": "В `{path}` не найдено наборов Parquet (clean, clean_dedup, gold/). "
+                         "Укажите папку данных конвейера в боковой панели."},
+    "parquet_error": {"fr": "Lecture Parquet impossible : {e}. Installez pyarrow.", "en": "Cannot read Parquet: {e}. Install pyarrow.",
+                      "ru": "Не удаётся прочитать Parquet: {e}. Установите pyarrow."},
     "theme4_title": {"fr": "Thème 4 — Pics d'activité géolocalisés", "en": "Theme 4 — Geolocated activity peaks",
                      "ru": "Тема 4 — Геолокализованные пики активности"},
     "theme4_intro": {
@@ -240,6 +351,7 @@ def prepare_chart(df: pd.DataFrame, x: str, y: str, kind: str, top_n: int) -> pd
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser()
     ap.add_argument("--analysis", default="bigdata_pipeline/analysis")
+    ap.add_argument("--data", default="telescope_pipeline_files")
     args, _ = ap.parse_known_args()
     return args
 
@@ -277,6 +389,7 @@ def table_view(files: dict[str, Path], key: str) -> None:
             st.markdown(read_text(readme))
     df = load_csv(str(path), path.stat().st_mtime)
     st.caption(tr("rows_cols", rows=fmt_int(len(df)), cols=len(df.columns)) + f" — `{path}`")
+    file_card(path.stem, get_table_factory(files))
 
     none_label = "—"
     c1, c2, c3 = st.columns([3, 2, 1])
@@ -325,12 +438,26 @@ def get_table_factory(files: dict[str, Path]):
 
 
 def caption_block(stem: str, get_table) -> None:
-    """Short description and key figures of a chart or map (Markdown lines)."""
+    """Short description and key figures of a chart or map (Markdown lines); never empty."""
     what, facts = describe(stem, LANG, get_table)
     if what:
         st.markdown(f"- {what}")
+    figures = facts or generic_caption(stem, LANG, get_table)
+    if figures:
+        st.markdown(f"- **{tr('key_figures')} :** {figures}" if LANG == "fr" else f"- **{tr('key_figures')}:** {figures}")
+    if not what and not figures:
+        st.markdown(f"- _{tr('no_caption')}_")
+
+
+def file_card(stem: str, get_table) -> None:
+    """Why a CSV table was produced and its key figures."""
+    why, facts, documented = describe_table(stem, LANG, get_table)
+    if why:
+        st.markdown(f"**{tr('purpose')} :** {why}" if LANG == "fr" else f"**{tr('purpose')}:** {why}")
     if facts:
-        st.markdown(f"- **{tr('key_figures')} :** {facts}" if LANG == "fr" else f"- **{tr('key_figures')}:** {facts}")
+        st.markdown(f"**{tr('result')} :** {facts}" if LANG == "fr" else f"**{tr('result')}:** {facts}")
+    if not documented:
+        st.caption(tr("undocumented"))
 
 
 def figures_view(fig_dirs: list[Path], get_table) -> None:
@@ -364,41 +491,216 @@ def maps_view(map_dir: Path, get_table) -> None:
     st.download_button(tr("dl_map"), html.encode("utf-8"), file_name=path.name, mime="text/html", key="map_dl")
 
 
-def page_theme(page_id: str, analysis: Path) -> None:
+# ----------------------------------------------------------------- Parquet access (cached)
+@st.cache_data(show_spinner=False)
+def load_parquet_info(path: str, mtime: float) -> dict:
+    return parquet_info(Path(path))
+
+
+@st.cache_data(show_spinner=False)
+def load_parquet_preview(path: str, mtime: float, n: int) -> pd.DataFrame:
+    return parquet_preview(Path(path), n)
+
+
+def parquet_card(name: str, path: Path, key: str) -> None:
+    """Why a Parquet dataset was produced, how big it is, its columns and (on request) its first rows."""
+    try:
+        info = load_parquet_info(str(path), path.stat().st_mtime)
+    except Exception as e:                                   # pyarrow missing or unreadable files
+        st.warning(tr("parquet_error", e=e))
+        info = None
+    why, res, documented = describe_parquet(name, LANG, info["rows"] if info else None)
+    if why:
+        st.markdown(f"**{tr('purpose')} :** {why}" if LANG == "fr" else f"**{tr('purpose')}:** {why}")
+    if res:
+        st.markdown(f"**{tr('result')} :** {res}" if LANG == "fr" else f"**{tr('result')}:** {res}")
+    if not documented:
+        st.caption(tr("undocumented"))
+    if info is None:
+        return
+    st.caption(tr("n_parts", n=info["n_files"], size=fmt_bytes(info["size"])) + f" — `{path}`")
+    st.markdown(f"**{tr('columns_title')}**")
+    st.dataframe(pd.DataFrame(info["columns"], columns=[tr("col_name"), tr("col_type")]))
+    if st.checkbox(tr("preview"), key=f"{key}_pv_{name}"):
+        try:
+            st.dataframe(load_parquet_preview(str(path), path.stat().st_mtime, 20))
+        except Exception as e:
+            st.warning(tr("parquet_error", e=e))
+
+
+def csv_card(name: str, path: Path, get_table, key: str) -> None:
+    """Details of one CSV: purpose, figures, columns and first rows."""
+    file_card(path.stem, get_table)
+    df = load_csv(str(path), path.stat().st_mtime)
+    st.caption(tr("rows_cols", rows=fmt_int(len(df)), cols=len(df.columns)) + f" — `{path}`")
+    st.markdown(f"**{tr('columns_title')}**")
+    st.dataframe(pd.DataFrame({tr("col_name"): df.columns, tr("col_type"): [str(t) for t in df.dtypes]}))
+    st.markdown(f"**{tr('preview')}**")
+    st.dataframe(df.head(10))
+
+
+def files_view(files: dict[str, Path], parquets: dict[str, Path], key: str) -> None:
+    """Catalogue of the CSV tables and Parquet datasets: summary list, then one card per chosen file."""
+    st.write(tr("files_intro"))
+    get_table = get_table_factory(files)
+    if files:
+        st.markdown(f"#### {tr('csv_files')} ({len(files)})")
+        rows = []
+        for k, p in files.items():
+            e = TABLE_INFO.get(p.stem)
+            rows.append({tr("col_file"): k, tr("col_folder"): p.parent.name, tr("col_size"): fmt_bytes(p.stat().st_size),
+                         tr("col_purpose"): e["why"][LANG] if e else "—"})
+        st.dataframe(pd.DataFrame(rows))
+        pick = st.selectbox(tr("pick_file"), list(files), key=f"{key}_csvpick")
+        csv_card(pick, files[pick], get_table, key)
+    if parquets:
+        st.markdown(f"#### {tr('parquet_files')} ({len(parquets)})")
+        rows = []
+        for k, p in parquets.items():
+            e = PARQUET_INFO.get(k)
+            size = sum(f.stat().st_size for f in p.rglob("*.parquet"))
+            rows.append({tr("col_file"): k, tr("col_folder"): p.parent.name, tr("col_size"): fmt_bytes(size),
+                         tr("col_purpose"): e["why"][LANG] if e else "—"})
+        st.dataframe(pd.DataFrame(rows))
+        pick = st.selectbox(tr("pick_file"), list(parquets), key=f"{key}_pqpick")
+        parquet_card(pick, parquets[pick], key)
+
+
+def theme_files(page_id: str, analysis: Path) -> tuple[list[Path], dict[str, Path]]:
+    """Table folders of a theme and the CSV files found in them (key = file stem, or folder/stem when several folders)."""
+    tdirs = [analysis / t for t in THEMES[page_id]["tables"]]
+    files: dict[str, Path] = {}
+    for tdir in tdirs:
+        files.update({(f"{tdir.name}/{k}" if len(tdirs) > 1 else k): v for k, v in discover_tables(tdir).items()})
+    return tdirs, files
+
+
+def headline_block(page_id: str, get_table) -> None:
+    """Key figures of a theme: one line per headline chart or table, computed from the files."""
+    n = 0
+    for stem in HEADLINES.get(page_id, []):
+        what, facts = describe(stem, LANG, get_table)
+        if facts:
+            st.markdown(f"- {facts}")
+            n += 1
+    if not n:
+        st.info(tr("no_figures"))
+
+
+def formulas_block(page_id: str) -> None:
+    """Mathematical formulas of the theme's methods, each with its symbols and its meaning."""
+    items = FORMULAS.get(page_id, [])
+    if not items:
+        return
+    st.markdown(f"#### {tr('formulas')}")
+    st.caption(tr("formulas_note"))
+    for f in items:
+        st.markdown(f"**{f['name'][LANG]}**")
+        st.latex(f["tex"])
+        st.markdown(f["text"][LANG])
+
+
+def flagged_block(files: dict[str, Path], key: str) -> None:
+    """Theme 5: the flagged channels with their level of suspicion and the indicators that fired."""
+    st.markdown(f"#### {tr('flagged_title')}")
+    st.markdown(tr("flagged_note"))
+    p = next((v for k, v in files.items() if v.stem == "suspicious_channels"), None)
+    if p is None:
+        st.info(tr("flagged_missing"))
+        return
+    sus = load_csv(str(p), p.stat().st_mtime)
+    rp = next((v for k, v in files.items() if v.stem == "review_candidates"), None)
+    review = load_csv(str(rp), rp.stat().st_mtime) if rp is not None else None
+    d = flagged_channels(sus, review, LANG)
+    n = d["level_key"].value_counts()
+    st.markdown(tr("flagged_counts", n=fmt_int(len(d)), high=fmt_int(int(n.get("high", 0))),
+                   medium=fmt_int(int(n.get("medium", 0))), low=fmt_int(int(n.get("low", 0)))))
+    c1, c2 = st.columns(2)
+    names = [tr("level_all")] + [LEVEL_NAMES[LANG][k] for k in ("high", "medium", "low")]
+    lvl = c1.selectbox(tr("level_filter"), names, key=f"{key}_level")
+    top = c2.slider(tr("flagged_top"), 10, 200, 30, key=f"{key}_flagged_n")
+    view = d if lvl == tr("level_all") else d[d["level"] == lvl]
+    st.dataframe(view.drop(columns="level_key").head(top))
+
+
+def text_block(page_id: str) -> None:
+    t = THEME_TEXT[page_id]
+    st.markdown(f"**{tr('goal')}.** {t['goal'][LANG]}")
+    st.markdown(f"**{tr('method')}.** {t['method'][LANG]}")
+
+
+def page_theme(page_id: str, analysis: Path, data_dir: Path) -> None:
     cfg = THEMES[page_id]
     st.header(tr(f"{page_id}_title"))
     st.write(tr(f"{page_id}_intro"))
-    tdirs = [analysis / t for t in cfg["tables"]]
+    tdirs, files = theme_files(page_id, analysis)
     fdirs = [analysis / f for f in cfg["figures"]]
-    files: dict[str, Path] = {}
-    for tdir in tdirs:
-        found = discover_tables(tdir)
-        files.update({(f"{tdir.name}/{k}" if len(tdirs) > 1 else k): v for k, v in found.items()})
     key = page_id
     get_table = get_table_factory(files)
+    all_pq = discover_parquets(data_dir)
+    parquets = {k: v for k, v in all_pq.items() if k in cfg.get("parquets", [])}
 
-    info = tdirs[0] / "run_info.json"
-    if info.is_file():
-        with st.expander(tr("run_info")):
-            st.code(read_text(info), language="json")
-    protocol = tdirs[0] / "tracing_protocol.md"
-    if protocol.is_file():
-        with st.expander(tr("protocol")):
-            st.markdown(read_text(protocol))
-
-    labels = [tr("tab_tables"), tr("tab_figs")] + ([tr("tab_maps")] if "maps" in cfg else [])
+    labels = [tr("tab_summary"), tr("tab_figs"), tr("tab_tables")] + ([tr("tab_maps")] if "maps" in cfg else []) + [tr("tab_files")]
     tabs = st.tabs(labels)
     with tabs[0]:
+        text_block(page_id)
+        formulas_block(page_id)
+        st.markdown(f"#### {tr('results')}")
+        headline_block(page_id, get_table)
+        if page_id == "theme5":
+            flagged_block(files, key)
+        st.markdown(f"**{tr('limits')}.** {THEME_TEXT[page_id]['limits'][LANG]}")
+        info = tdirs[0] / "run_info.json"
+        if info.is_file():
+            with st.expander(tr("run_info")):
+                st.code(read_text(info), language="json")
+        protocol = tdirs[0] / "tracing_protocol.md"
+        if protocol.is_file():
+            with st.expander(tr("protocol")):
+                st.markdown(read_text(protocol))
+    with tabs[1]:
+        figures_view(fdirs, get_table)
+    with tabs[2]:
         if files:
             st.caption(tr("n_tables", n=len(files), path=", ".join(str(d) for d in tdirs)))
             table_view(files, key)
         else:
             st.warning(tr("no_csv", path=", ".join(str(d) for d in tdirs)))
-    with tabs[1]:
-        figures_view(fdirs, get_table)
     if "maps" in cfg:
-        with tabs[2]:
+        with tabs[3]:
             maps_view(analysis / cfg["maps"], get_table)
+    with tabs[-1]:
+        files_view(files, parquets, key)
+
+
+def page_report(analysis: Path, data_dir: Path) -> None:
+    st.title(tr("report_title"))
+    st.write(tr("report_intro"))
+    st.markdown(tr("report_howto"))
+    page_pipeline()
+    for pid in THEMES:
+        st.header(tr(f"{pid}_title"))
+        text_block(pid)
+        with st.expander(tr("formulas")):
+            formulas_block(pid)
+        _, files = theme_files(pid, analysis)
+        headline_block(pid, get_table_factory(files))
+        st.markdown(f"**{tr('limits')}.** {THEME_TEXT[pid]['limits'][LANG]}")
+    st.header(tr("global_limits"))
+    st.write(GLOBAL_LIMITS[LANG])
+    st.header(tr("references"))
+    for r in REFERENCES:
+        st.markdown(f"- {r}")
+
+
+def page_catalog(analysis: Path, data_dir: Path) -> None:
+    st.header(tr("page_catalog"))
+    st.write(tr("catalog_intro"))
+    files = discover_tables(analysis)
+    parquets = discover_parquets(data_dir)
+    if not parquets:
+        st.warning(tr("no_parquet", path=data_dir))
+    files_view(files, parquets, "catalog")
 
 
 def main() -> None:
@@ -408,16 +710,26 @@ def main() -> None:
     st.sidebar.title("TeleScope v2")
     LANG = st.sidebar.selectbox("Language / Langue / Язык", list(LANGS), format_func=LANGS.get)
     analysis = Path(st.sidebar.text_input(tr("analysis_dir"), args.analysis)).expanduser()
-    page_ids = ["pipeline"] + list(THEMES)
-    page = st.sidebar.radio(tr("page"), page_ids,
-                            format_func=lambda p: tr("page_pipeline") if p == "pipeline" else tr(f"{p}_title"))
-    if not analysis.is_dir() and page != "pipeline":
+    data_dir = Path(st.sidebar.text_input(tr("data_dir"), args.data)).expanduser()
+    page_ids = ["report", "pipeline"] + list(THEMES) + ["catalog"]
+    names = {"report": tr("page_report"), "pipeline": tr("page_pipeline"), "catalog": tr("page_catalog")}
+    page = st.sidebar.radio(tr("page"), page_ids, format_func=lambda p: names.get(p) or tr(f"{p}_title"))
+    if not analysis.is_dir() and page not in ("pipeline",):
         st.error(tr("no_dir", path=analysis))
         return
-    if page == "pipeline":
+    if page == "report":
+        page_report(analysis, data_dir)
+    elif page == "pipeline":
         page_pipeline()
+        parquets = discover_parquets(data_dir)
+        if parquets:
+            files_view({}, parquets, "pipeline")
+        else:
+            st.warning(tr("no_parquet", path=data_dir))
+    elif page == "catalog":
+        page_catalog(analysis, data_dir)
     else:
-        page_theme(page, analysis)
+        page_theme(page, analysis, data_dir)
 
 
 if __name__ == "__main__":

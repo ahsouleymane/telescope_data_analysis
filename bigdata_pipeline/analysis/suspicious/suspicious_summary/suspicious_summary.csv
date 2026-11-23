@@ -1,0 +1,16 @@
+metric,value
+channels evaluated,69909
+channels with 1+ flag,4322
+channels with 2+ flags,419
+channels with 3+ flags,121
+coordinated pairs kept,62989
+channels with 2+ behaviour flags,346
+channels with 3+ behaviour flags,114
+channels in tight groups (coordination flag),959
+... of which with 1+ behaviour flag,83
+coordinated groups,808
+channels in groups,4979
+largest group (channels),278
+fast10 % first month,1.72
+fast10 % last month,9.71
+fast10 % max month,2024-09 (9.7)

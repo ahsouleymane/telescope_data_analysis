@@ -623,6 +623,230 @@ REGISTRY: dict[str, dict] = {
 }
 
 
+# ----------------------------------------------------------------- theme 5: suspicious trends
+def metric(df: pd.DataFrame, name: str, default=None):
+    """Value of the row whose metric name starts with `name` (case-insensitive); `default` if absent."""
+    try:
+        return float(summary_value(df, name)["value"])
+    except KeyError:
+        if default is None:
+            raise
+        return default
+
+
+def f_scores(T, L):
+    s = need(T, "suspicious_summary")
+    ev = metric(s, "channels evaluated")
+    a1, a2, a3 = (metric(s, f"channels with {k}+ flag") for k in (1, 2, 3))
+    return dict(ev=num(ev, L), a1=num(a1, L), p1=pct(a1 / ev, L, 2), a2=num(a2, L), p2=pct(a2 / ev, L, 2),
+                a3=num(a3, L), p3=pct(a3 / ev, L, 2))
+
+
+def f_indicators(T, L):
+    d = need(T, "indicator_summary")
+    r = d.loc[d["n_flagged"].astype(float).idxmax()]
+    return dict(n=num(len(d), L), top=str(r["indicator"]), k=num(r["n_flagged"], L),
+                p=dec(r["share_of_channels_pct"], L, 2) + " %")
+
+
+def f_overlap(T, L):
+    s = need(T, "suspicious_summary")
+    b2, b3 = metric(s, "channels with 2+ behaviour flags"), metric(s, "channels with 3+ behaviour flags")
+    tg = metric(s, "channels in tight groups")
+    both = metric(s, "... of which with 1+ behaviour flag")
+    return dict(b2=num(b2, L), b3=num(b3, L), tg=num(tg, L), both=num(both, L), p=pct(both / tg, L, 1))
+
+
+def f_fast_source(T, L):
+    d = need(T, "indicator_summary").set_index("indicator")
+    return dict(a=num(d.loc["fast_relay", "n_flagged"], L), pa=dec(d.loc["fast_relay", "share_of_channels_pct"], L, 2) + " %",
+                b=num(d.loc["single_source", "n_flagged"], L), pb=dec(d.loc["single_source", "share_of_channels_pct"], L, 2) + " %")
+
+
+def f_groups(T, L):
+    s = need(T, "suspicious_summary")
+    return dict(g=num(metric(s, "coordinated groups"), L), c=num(metric(s, "channels in groups"), L),
+                big=num(metric(s, "largest group"), L), t=num(metric(s, "channels in tight groups"), L))
+
+
+def f_fast_monthly(T, L):
+    d = need(T, "monthly_trend").dropna(subset=["fast10_pct"]).sort_values("month")
+    a, b, m = d.iloc[0], d.iloc[-1], d.loc[d["fast10_pct"].astype(float).idxmax()]
+    return dict(m0=str(a["month"]), v0=dec(a["fast10_pct"], L, 2) + " %", m1=str(b["month"]),
+                v1=dec(b["fast10_pct"], L, 2) + " %", mm=str(m["month"]), vm=dec(m["fast10_pct"], L, 2) + " %")
+
+
+def f_cascades(T, L):
+    d = need(T, "monthly_trend").dropna(subset=["n_cascades"])
+    tot, tight = float(d["n_cascades"].sum()), float(d["n_tight"].sum())
+    d = d[d["n_cascades"] >= 10].assign(s=lambda x: x["n_tight"] / x["n_cascades"])
+    m = d.loc[d["s"].idxmax()]
+    return dict(n=num(tot, L), p=pct(tight / tot, L, 1), mm=str(m["month"]), pm=pct(m["s"], L, 1))
+
+
+def f_mirror_kinds(T, L):
+    d = need(T, "fast_mirror_channels")
+    k = d["kind"].value_counts()
+    return dict(n=num(len(d), L), txt=", ".join(f"{a}: {num(b, L)} ({pct(b / len(d), L, 0)})" for a, b in k.items()))
+
+
+def f_mirror_families(T, L):
+    d = need(T, "fast_mirror_families")
+    c = next((c for c in d.columns if c in ("n_members", "members", "n_channels", "n_followers")), None)
+    if c is None:
+        raise KeyError("members")
+    return dict(n=num(len(d), L), big=num(d[c].max(), L))
+
+
+def f_trend_excluding(T, L):
+    d = need(T, "fast_trend_excluding")
+    m = d.loc[d["fast10_pct_all"].astype(float).idxmax()]
+    return dict(mm=str(m["month"]), a=dec(m["fast10_pct_all"], L, 2) + " %", w=dec(m["fast10_pct_without"], L, 2) + " %",
+                s=dec(m["share_of_fast10_from_selected_pct"], L, 1) + " %")
+
+
+def f_drivers(T, L):
+    s = need(T, "month_drivers_summary")
+    return dict(inc=num(metric(s, "fast-relay increase"), L), t1=dec(metric(s, "share of the top 1 channels"), L, 1) + " %",
+                t10=dec(metric(s, "share of the top 10 channels"), L, 1) + " %",
+                half=num(metric(s, "channels that make half"), L), eh=num(metric(s, "excess: channels that make half"), L))
+
+
+def f_review(T, L):
+    s = need(T, "review_summary")
+    n = metric(s, "channels to review")
+    disc = metric(s, "kind: linked_discussion", 0) + metric(s, "kind: discussion_possible", 0)
+    return dict(n=num(n, L), d=num(disc, L), p=pct(disc / n, L, 0))
+
+
+REGISTRY.update({
+    "score_distribution": dict(
+        what=L3("Nombre de chaînes selon leur nombre d'indicateurs de comportement atypique déclenchés (0, 1, 2…).",
+                "Number of channels by how many atypical-behaviour indicators they trigger (0, 1, 2…).",
+                "Число каналов по количеству сработавших индикаторов нетипичного поведения (0, 1, 2…)."),
+        facts=f_scores,
+        tpl=L3("{ev} chaînes évaluées ; {a1} ({p1}) avec au moins 1 indicateur, {a2} ({p2}) avec au moins 2, {a3} ({p3}) avec au moins 3.",
+               "{ev} channels evaluated; {a1} ({p1}) with at least 1 indicator, {a2} ({p2}) with at least 2, {a3} ({p3}) with at least 3.",
+               "Оценено {ev} каналов; {a1} ({p1}) с хотя бы 1 индикатором, {a2} ({p2}) с 2 и более, {a3} ({p3}) с 3 и более.")),
+    "indicator_counts": dict(
+        what=L3("Nombre de chaînes signalées par chaque indicateur, par catégorie (comportement ou coordination).",
+                "Number of channels flagged by each indicator, by category (behaviour or coordination).",
+                "Число каналов, отмеченных каждым индикатором, по категориям (поведение или координация)."),
+        facts=f_indicators,
+        tpl=L3("{n} indicateurs ; le plus fréquent : {top} ({k} chaînes, {p} des chaînes évaluées).",
+               "{n} indicators; the most frequent: {top} ({k} channels, {p} of evaluated channels).",
+               "{n} индикаторов; самый частый: {top} ({k} каналов, {p} оценённых каналов).")),
+    "fast_vs_source": dict(
+        what=L3("Chaque point est une chaîne : part de ses transferts relayés en moins de 10 s (axe vertical) et part venant de sa source principale (axe horizontal).",
+                "Each dot is a channel: share of its forwards relayed within 10 s (vertical) and share coming from its top source (horizontal).",
+                "Каждая точка — канал: доля пересылок в течение 10 с (по вертикали) и доля из главного источника (по горизонтали)."),
+        facts=f_fast_source,
+        tpl=L3("{a} chaînes relaient très vite ({pa} des chaînes évaluées) et {b} puisent presque tout à une seule source ({pb}).",
+               "{a} channels relay very fast ({pa} of evaluated channels) and {b} take almost everything from one source ({pb}).",
+               "{a} каналов пересылают очень быстро ({pa} оценённых) и {b} берут почти всё из одного источника ({pb}).")),
+    "fast_share_monthly": dict(
+        what=L3("Part des transferts relayés moins de 10 s après le message d'origine, mois par mois.",
+                "Share of forwards relayed less than 10 s after the original message, month by month.",
+                "Доля пересылок менее чем через 10 с после исходного сообщения по месяцам."),
+        facts=f_fast_monthly,
+        tpl=L3("{m0} : {v0} ; {m1} : {v1} ; maximum : {vm} en {mm}.", "{m0}: {v0}; {m1}: {v1}; maximum: {vm} in {mm}.",
+               "{m0}: {v0}; {m1}: {v1}; максимум: {vm} в {mm}.")),
+    "cascades_monthly": dict(
+        what=L3("Messages très relayés (au moins 10 relais) et part de ceux dont la plupart des relais arrivent dans les 10 premières minutes.",
+                "Widely relayed messages (at least 10 relays) and the share whose relays mostly arrive within the first 10 minutes.",
+                "Сильно пересылаемые сообщения (от 10 пересылок) и доля тех, у которых большинство пересылок приходится на первые 10 минут."),
+        facts=f_cascades,
+        tpl=L3("{n} cascades au total, dont {p} concentrées dans les 10 premières minutes ; mois le plus concentré : {mm} ({pm}).",
+               "{n} cascades in total, {p} of them concentrated in the first 10 minutes; most concentrated month: {mm} ({pm}).",
+               "Всего {n} каскадов, из них {p} сосредоточены в первые 10 минут; самый концентрированный месяц: {mm} ({pm}).")),
+    "coordinated_groups": dict(
+        what=L3("Taille des plus grands groupes de chaînes qui relaient les mêmes messages à quelques secondes d'écart.",
+                "Size of the largest groups of channels relaying the same messages seconds apart.",
+                "Размер крупнейших групп каналов, пересылающих одни и те же сообщения с разницей в секунды."),
+        facts=f_groups,
+        tpl=L3("{g} groupes, {c} chaînes y figurent ; plus grand groupe : {big} chaînes ; {t} chaînes dans des groupes serrés.",
+               "{g} groups holding {c} channels; largest group: {big} channels; {t} channels in tight groups.",
+               "{g} групп, в них {c} каналов; крупнейшая группа: {big} каналов; {t} каналов в плотных группах.")),
+    "behaviour_vs_group": dict(
+        what=L3("Recoupement entre les deux sources de signal : comportement individuel et appartenance à un groupe serré.",
+                "Overlap between the two sources of signal: individual behaviour and membership of a tight group.",
+                "Пересечение двух источников сигнала: индивидуальное поведение и участие в плотной группе."),
+        facts=f_overlap,
+        tpl=L3("{b2} chaînes avec au moins 2 indicateurs de comportement ({b3} avec au moins 3) ; sur {tg} chaînes en groupe serré, {both} ({p}) ont aussi un indicateur de comportement.",
+               "{b2} channels with at least 2 behaviour indicators ({b3} with at least 3); of {tg} channels in a tight group, {both} ({p}) also have a behaviour indicator.",
+               "{b2} каналов с 2 и более индикаторами поведения ({b3} с 3 и более); из {tg} каналов в плотных группах {both} ({p}) имеют и индикатор поведения.")),
+    "mirror_delay": dict(
+        what=L3("Délai typique des chaînes qui relaient presque instantanément depuis une seule source, selon leur type.",
+                "Typical delay of channels that relay almost instantly from a single source, by type.",
+                "Типичная задержка каналов, пересылающих почти мгновенно из одного источника, по типам."),
+        facts=f_mirror_kinds,
+        tpl=L3("{n} chaînes sélectionnées : {txt}.", "{n} selected channels: {txt}.", "Отобрано {n} каналов: {txt}.")),
+    "mirror_families": dict(
+        what=L3("Sources suivies par plusieurs chaînes miroirs (familles de miroirs).",
+                "Sources followed by several mirror channels (mirror families).",
+                "Источники, за которыми следуют несколько каналов-зеркал (семейства зеркал)."),
+        facts=f_mirror_families,
+        tpl=L3("{n} familles ; la plus grande : {big} chaînes.", "{n} families; the largest: {big} channels.",
+               "{n} семейств; крупнейшее: {big} каналов.")),
+    "fast_trend_excluding": dict(
+        what=L3("Part des relais en moins de 10 s, avec toutes les chaînes puis sans les chaînes sélectionnées : la hausse vient-elle d'elles ?",
+                "Share of relays within 10 s, with all channels and without the selected ones: does the rise come from them?",
+                "Доля пересылок в течение 10 с со всеми каналами и без отобранных: связан ли рост с ними?"),
+        facts=f_trend_excluding,
+        tpl=L3("Mois du maximum ({mm}) : {a} avec toutes les chaînes, {w} sans les chaînes sélectionnées ; elles produisent {s} des relais rapides de ce mois.",
+               "Peak month ({mm}): {a} with all channels, {w} without the selected ones; they produce {s} of that month's fast relays.",
+               "Месяц максимума ({mm}): {a} со всеми каналами, {w} без отобранных; они дают {s} быстрых пересылок этого месяца.")),
+    "month_drivers_concentration": dict(
+        what=L3("Part cumulée des relais rapides du mois étudié, chaînes classées de la plus à la moins active.",
+                "Cumulative share of the studied month's fast relays, channels ranked from most to least active.",
+                "Накопленная доля быстрых пересылок изучаемого месяца; каналы ранжированы от самого активного."),
+        facts=f_drivers,
+        tpl=L3("Hausse de {inc} relais rapides ; la première chaîne produit {t1} des relais rapides du mois, les 10 premières {t10} ; {half} chaînes en font la moitié ({eh} pour la hausse seule).",
+               "Increase of {inc} fast relays; the top channel makes {t1} of the month's fast relays, the top 10 {t10}; {half} channels make half ({eh} for the increase alone).",
+               "Рост на {inc} быстрых пересылок; первый канал даёт {t1} быстрых пересылок месяца, первые 10 — {t10}; половину дают {half} каналов ({eh} для самого роста).")),
+    "review_overview": dict(
+        what=L3("Chaînes retenues pour une relecture à la main (beaucoup d'indicateurs de comportement, ou groupe serré et comportement).",
+                "Channels kept for manual review (many behaviour indicators, or tight group and behaviour).",
+                "Каналы для ручной проверки (много индикаторов поведения или плотная группа и поведение)."),
+        facts=f_review,
+        tpl=L3("{n} chaînes à relire, dont {d} ({p}) sont des discussions liées ou possibles.",
+               "{n} channels to review, {d} ({p}) of them linked or possible discussion groups.",
+               "{n} каналов для проверки, из них {d} ({p}) — связанные или возможные группы обсуждения.")),
+})
+
+# stems shown as "key results" on the summary tab of each theme (their figures are computed from the tables)
+HEADLINES: dict[str, list[str]] = {
+    "theme1": ["community_size_distribution", "top_20_communities", "flows_between_communities", "resolution_curve",
+               "yearly_structure", "yearly_stability"],
+    "theme2": ["community_purity", "language_distribution", "language_homophily", "language_flows_heatmap",
+               "language_bridges", "language_inference_accuracy", "language_yearly_cohesion"],
+    "theme3": ["chain_size_distribution", "delay_distribution", "delay_by_year", "source_concentration",
+               "source_verification", "top_sources", "traceability_levels"],
+    "theme4": ["city_coverage_by_language", "coverage_by_method", "top_cities", "top_cities_series",
+               "episodes_per_month", "cities_anomalous_per_day", "map_city_correlation", "map_synchronized_peaks"],
+    "theme5": ["score_distribution", "indicator_counts", "behaviour_vs_group", "coordinated_groups", "fast_share_monthly",
+               "cascades_monthly", "mirror_delay", "fast_trend_excluding", "month_drivers_concentration", "review_overview"],
+}
+
+
+def generic_caption(stem: str, lang: str, get_table) -> str:
+    """Figures for a chart that has no hand-written caption: size and extremes of the table with the same name."""
+    d = get_table(stem)
+    if d is None or d.empty:
+        return ""
+    txt = {"fr": f"table « {stem} » : {num(len(d), lang)} lignes",
+           "en": f"table '{stem}': {num(len(d), lang)} rows",
+           "ru": f"таблица «{stem}»: {num(len(d), lang)} строк"}[lang]
+    nums = [c for c in d.columns if pd.api.types.is_numeric_dtype(d[c]) and not re.search(r"(_id$|^id$|rank|index)", str(c), re.I)]
+    top = []
+    for c in nums[:2]:
+        v = d[c].dropna().astype(float)
+        if len(v):
+            top.append(f"{c} : min {dec(v.min(), lang, 2)}, " + {"fr": "médiane", "en": "median", "ru": "медиана"}[lang]
+                       + f" {dec(v.median(), lang, 2)}, max {dec(v.max(), lang, 2)}")
+    return txt + (" ; " + " ; ".join(top) if top else "")
+
+
 def describe(stem: str, lang: str, get_table) -> tuple[str, str]:
     """(what the chart shows, key figures) for a chart or map file stem; empty strings when unknown."""
     e = REGISTRY.get(stem)

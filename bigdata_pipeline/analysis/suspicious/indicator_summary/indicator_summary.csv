@@ -1,0 +1,13 @@
+category,indicator,n_flagged,share_of_channels_pct,threshold
+behaviour,fast_relay,394,0.564,0.4397650047385954
+behaviour,single_source,1737,2.485,0.9
+behaviour,round_clock,524,0.75,0.9865918801402875
+behaviour,fixed_second,663,0.948,0.5060571517996874
+behaviour,daily_burst,62,0.089,200.73249999999894
+behaviour,views_gap,13,0.019,4.0
+behaviour,pure_relay,242,0.346,0.99
+behaviour,broad_instant,44,0.063,100.0
+behaviour,steady_delay,173,0.247,10.0
+behaviour,high_throughput,18,0.026,1000.0
+behaviour,abrupt_volume,51,0.073,10000.0
+coordination,in_tight_group,959,1.372,

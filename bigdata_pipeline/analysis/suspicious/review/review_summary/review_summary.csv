@@ -1,0 +1,21 @@
+metric,value
+channels to review,194
+selection: behaviour,111
+selection: group+behaviour,80
+selection: behaviour+group,3
+kind: not_selected,125
+kind: linked_discussion,27
+kind: other,17
+kind: discussion_possible,15
+kind: instant_relay,10
+indicator: single_source,118
+indicator: fast_relay,117
+indicator: steady_delay,106
+indicator: in_tight_group,83
+indicator: round_clock,38
+indicator: broad_instant,22
+indicator: pure_relay,19
+indicator: abrupt_volume,13
+indicator: high_throughput,7
+indicator: fixed_second,2
+indicator: daily_burst,2

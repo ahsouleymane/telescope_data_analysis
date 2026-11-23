@@ -1,0 +1,15 @@
+metric,value
+selected channels,137.0
+channels with a known top source,137.0
+distinct sources followed,134.0
+families with >= 3 followers,1.0
+channels in those families,3.0
+median delay to source (s),4.0
+near-constant lag (IQR <= 5 s),78.0
+source is itself a selected channel,0.0
+with public title in metadata,137.0
+kind: linked_discussion,43.0
+kind: discussion_possible,17.0
+kind: instant_relay,13.0
+kind: other,64.0
+channels left to review (not linked_discussion),94.0
