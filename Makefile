@@ -23,7 +23,7 @@ PY         := python3
 
 .DEFAULT_GOAL := help
 .PHONY: all help build shell lock versions test selftest pipeline job1 job2 job3 job4 job5 job6 \
-        theme1 theme2 theme3 theme4 theme5 th4-1 th4-2 th4-3 th4-4 th4-5 th5-1 th5-2 th5-3 th5-4 th5-5 digest compare app clean-spark
+        theme1 theme2 theme3 theme4 theme5 th4-1 th4-2 th4-3 th4-4 th4-5 th5-1 th5-2 th5-3 th5-4 th5-5 from-clean all-from-clean digest-clean digest compare app clean-spark
 
 help:  ## list the commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -37,7 +37,7 @@ shell:  ## interactive shell in the environment
 	$(RUN) bash
 
 lock:  ## freeze the exact versions of the image into requirements.lock (then commit it, rebuild)
-	$(RUN) bash -c "pip freeze --exclude-editable" > requirements.lock
+	$(RUN) bash -c "pip freeze --exclude-editable" > requirements.lock.tmp && mv requirements.lock.tmp requirements.lock || { rm -f requirements.lock.tmp; exit 1; }
 	@echo "requirements.lock written: commit it, then run 'make build'"
 
 versions:  ## write ENVIRONMENT.txt (python, java, spark, libraries) to attach to the report
@@ -54,6 +54,12 @@ selftest:  ## selftest of every analysis script that has one
 # ---------------------------------------------------------------- Spark pipeline (raw -> clean -> gold)
 pipeline:  ## jobs 1 to 4: raw (/raw) -> clean, clean_dedup, chains, edges, stats
 	$(RUN) bash $(call script,run_pipeline.sh) /raw $(OUT)
+
+from-clean:  ## jobs 1b, 2, 3, 4 starting from the CLEANED data in $(OUT)/clean (no raw data needed)
+	$(RUN) $(PY) $(call script,job1b_dedup*.py) --out $(OUT)
+	$(RUN) $(PY) $(call script,job2_chains*.py) --out $(OUT)
+	$(RUN) $(PY) $(call script,job3_edges*.py) --out $(OUT) --csv
+	$(RUN) $(PY) $(call script,job4_stats*.py) --out $(OUT) --csv
 
 job5:  ## city x day aggregation (needs `make geo` first)
 	$(RUN) $(PY) $(call script,job5_city_daily*.py) --out $(OUT) --geo $(GEO_CSV) --csv
@@ -112,10 +118,16 @@ theme5:  ## theme 5 complete, in order: job6, th5-1 ... th5-4, review
 all:  ## WHOLE project, one step after the other (several hours)
 	$(MAKE) pipeline theme1 theme2 theme3 theme4 theme5
 
+all-from-clean:  ## WHOLE project starting from the cleaned data (the reproducibility reference)
+	$(MAKE) from-clean theme1 theme2 theme3 theme4 theme5
+
 # ---------------------------------------------------------------- reproducibility check
 RUN_ID ?= run1
 digest:  ## fingerprint of all results -> digest_$(RUN_ID).tsv   (make digest RUN_ID=run2 after a second run)
 	$(RUN) $(PY) $(call script,results_digest.py) --out digest_$(RUN_ID).tsv
+
+digest-clean:  ## fingerprint of the cleaned INPUT data -> digest_clean_$(RUN_ID).tsv (must be identical on both machines)
+	$(RUN) $(PY) $(call script,results_digest.py) --roots $(OUT)/clean --out digest_clean_$(RUN_ID).tsv
 
 compare:  ## compare two fingerprints: make compare A=run1 B=run2  (exit code 1 if anything differs)
 	$(RUN) $(PY) $(call script,results_digest.py) --compare digest_$(A).tsv digest_$(B).tsv

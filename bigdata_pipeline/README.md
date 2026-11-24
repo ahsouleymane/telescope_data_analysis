@@ -162,7 +162,8 @@ The project folder and the data must be copied too. If the user id differs, run 
 
 | Order | Command | Script | Output |
 |---|---|---|---|
-| 1 | `make pipeline` | `spark/run_pipeline.sh` (jobs 1, 1b, 2, 3, 4) | `telescope_pipeline_files/{clean,clean_dedup,gold}` |
+| 1 | `make pipeline` | `spark/run_pipeline.sh` (jobs 1, 1b, 2, 3, 4) from the raw data | `telescope_pipeline_files/{clean,clean_dedup,gold}` |
+| 1' | `make from-clean` | jobs 1b, 2, 3, 4 | same outputs, starting from `clean/` (no raw data needed) |
 | 2 | `make theme1` | `community_detection_v2.py` | `analysis/communities_v2/` |
 | 3 | `make theme2` | `language_analysis_v2.py` | `analysis/language_v2/` |
 | 4 | `make theme3` | `source_tracing.py` | `analysis/tracing/` |
@@ -182,7 +183,7 @@ The project folder and the data must be copied too. If the user id differs, run 
 The suffix of a script name gives its place: `th4` = theme 4, `th5` = theme 5, `3stp` = step 3.
 
 Shortcuts: `make theme4` runs steps 5 to 10 in order, `make theme5` runs steps 11 to 16,
-and `make all` runs the whole project, one step after the other (several hours).
+`make all` runs the whole project from the raw data, and `make all-from-clean` from the cleaned data (several hours).
 
 ## Spark pipeline (jobs 1-6)
 
@@ -274,20 +275,31 @@ make airflow-down
 
 ## Check that results are reproducible
 
+The reference is the CLEANED data (`telescope_pipeline_files/clean/`, a few GB), not the raw data (345 GB, job 1):
+the same cleaned data is copied to each machine and everything after it is recomputed.
 The image fixes the Python hash seed, the time zone (UTC), the number of cores and of shuffle partitions,
-and `requirements.lock` fixes the library versions. To prove that two runs give the same numbers:
+and `requirements.lock` fixes the library versions.
 
 ```bash
-make all
-make digest RUN_ID=run1                # digest_run1.tsv: one fingerprint per result table
-# delete the results, run `make all` again (or run on another machine), then:
-make digest RUN_ID=run2
-make compare A=run1 B=run2             # lists the tables that differ, exit code 1 if any
+# on each machine, with the same telescope_pipeline_files/clean/ and telescope_files/
+make digest-clean RUN_ID=machine1          # fingerprint of the INPUT: it must be identical on both machines
+make from-clean    && make digest RUN_ID=machine1_gold      # jobs 1b, 2, 3, 4
+make theme1 theme2 theme3 && make digest RUN_ID=machine1_themes123
+make theme4        && make digest RUN_ID=machine1_theme4
+make theme5        && make digest RUN_ID=machine1_theme5
+# (or `make all-from-clean` for everything, then one `make digest`)
+
+# after copying the .tsv files of the other machine next to these ones:
+make compare A=machine1_clean B=machine2_clean       # same input?
+make compare A=machine1_gold  B=machine2_gold        # same gold tables?
 ```
 
+`digest-clean` writes `digest_clean_<RUN_ID>.tsv`; compare these two files directly with `make compare A=clean_machine1 B=clean_machine2`.
+If the input fingerprints differ, the data copy is not the same and nothing after it can be compared.
 `results_digest.py` ignores the order of the rows and the names of the Spark `part-*` files, but it detects
 any change of value, down to the last decimal. Images, logs and run reports are ignored.
 Differences can still come from the order of floating-point sums in Spark or from ties in the deduplication.
+Run the cleaning from the raw data (`make pipeline`) only to check job 1 itself.
 
 ## Install without Docker
 
