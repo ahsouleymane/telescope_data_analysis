@@ -1,0 +1,383 @@
+./
+├── .agents/
+│   └── skills/
+│       └── developing-with-streamlit -> ../../.venv/lib/python3.13/site-packages/streamlit/.agents/skills/developing-with-streamlit/
+├── bigdata_pipeline/
+│   ├── airflow/
+│   │   └── dags/
+│   ├── analysis/
+│   │   ├── anomalies/
+│   │   │   ├── anomaly_episodes/
+│   │   │   ├── anomaly_summary/
+│   │   │   ├── city_pair_correlation/
+│   │   │   ├── lead_sensitivity/
+│   │   │   ├── synchronized_peaks/
+│   │   │   └── sync_onsets/
+│   │   ├── app/
+│   │   │   ├── telescope_app.py
+│   │   │   ├── telescope_captions.py
+│   │   │   └── telescope_catalog.py
+│   │   ├── city_coordinates/
+│   │   │   └── city_coordinates.csv
+│   │   ├── communities_v2/
+│   │   │   ├── communities_infomap/
+│   │   │   ├── communities_leiden/
+│   │   │   ├── community_comparison/
+│   │   │   ├── community_flows_leiden/
+│   │   │   ├── community_names/
+│   │   │   ├── community_profiles_leiden/
+│   │   │   ├── community_summary/
+│   │   │   ├── resolution_curve/
+│   │   │   ├── yearly_communities/
+│   │   │   └── run_info.json
+│   │   ├── figures/
+│   │   │   ├── anomalies/
+│   │   │   ├── community_detection/
+│   │   │   ├── geo_cities/
+│   │   │   ├── language_communities/
+│   │   │   ├── suspicious/
+│   │   │   └── traceability/
+│   │   ├── geo_cities/
+│   │   │   ├── channel_city/
+│   │   │   ├── channel_city_inferred/
+│   │   │   ├── channel_geo/
+│   │   │   ├── city_coverage/
+│   │   │   ├── city_totals/
+│   │   │   ├── geo_summary/
+│   │   │   ├── language_coverage/
+│   │   │   ├── propagation_accuracy/
+│   │   │   ├── timezone_check/
+│   │   │   ├── validation_sample/
+│   │   │   └── README.md
+│   │   ├── language_v2/
+│   │   │   ├── channel_language_inferred/
+│   │   │   ├── channel_language_votes/
+│   │   │   ├── community_language_purity/
+│   │   │   ├── inference_accuracy/
+│   │   │   ├── language_activity/
+│   │   │   ├── language_bridges/
+│   │   │   ├── language_flows/
+│   │   │   ├── language_homophily/
+│   │   │   ├── language_spread/
+│   │   │   ├── language_summary/
+│   │   │   ├── language_top_channels/
+│   │   │   ├── language_yearly/
+│   │   │   └── language_yearly_by_language/
+│   │   ├── suspicious/
+│   │   │   ├── coordinated_groups/
+│   │   │   ├── coordinated_members/
+│   │   │   ├── indicator_summary/
+│   │   │   ├── mirrors/
+│   │   │   ├── monthly_trend/
+│   │   │   ├── review/
+│   │   │   ├── suspicious_channels/
+│   │   │   └── suspicious_summary/
+│   │   ├── tracing/
+│   │   │   ├── chain_size_distribution/
+│   │   │   ├── delay_by_year/
+│   │   │   ├── delay_distribution/
+│   │   │   ├── source_concentration/
+│   │   │   ├── source_verification/
+│   │   │   ├── top_origin_posts/
+│   │   │   ├── top_sources/
+│   │   │   ├── traceability_by_year/
+│   │   │   ├── traceability_levels/
+│   │   │   ├── tracing_summary/
+│   │   │   └── tracing_protocol.md
+│   │   ├── anomaly_maps_th4-5stp.py
+│   │   ├── anomaly_peaks_th4-4stp.py
+│   │   ├── community_detection_v2.py
+│   │   ├── fast_mirror_channels_th5-2stp.py
+│   │   ├── fast_month_drivers_th5-4stp.py
+│   │   ├── fast_trend_excluding_th5-3stp.py
+│   │   ├── geo_cities_th4-2stp.py
+│   │   ├── inspect_metadata_th4-1stp.py
+│   │   ├── language_analysis_v2.py
+│   │   ├── profiles_diagnostic_th4-3stp.py
+│   │   ├── review_candidates.py
+│   │   ├── source_tracing.py
+│   │   └── suspicious_trends_th5-1stp.py
+│   ├── docker/
+│   ├── scripts/
+│   │   ├── run_clean.py*
+│   │   └── run_global.sh*
+│   ├── spark/
+│   │   ├── clean_records.py*
+│   │   ├── inputs.py
+│   │   ├── job1b_dedup.py
+│   │   ├── job1_clean.py*
+│   │   ├── job2_chains.py*
+│   │   ├── job3_edges.py*
+│   │   ├── job4_stats.py*
+│   │   ├── job5_city_daily.py
+│   │   ├── job6_suspicious.py
+│   │   ├── run_pipeline.sh*
+│   │   └── spark_session.py*
+│   ├── tests/
+│   │   ├── test_clean_records.py
+│   │   └── verify_spark.py*
+│   └── README.md
+├── .claude/
+│   └── skills/
+│       └── developing-with-streamlit -> ../../.venv/lib/python3.13/site-packages/streamlit/.agents/skills/developing-with-streamlit/
+├── code/
+│   ├── cascading_community_timelines.py
+│   ├── community_detection.py
+│   ├── config.py
+│   ├── language_analysis.py
+│   ├── requirements.txt
+│   └── yearly_community_maps.py
+├── .github/
+│   └── CODEOWNERS
+├── telescope_files/
+│   ├── cascade_community_timeline/
+│   │   ├── cascade_community_timeline.csv
+│   │   └── README.md
+│   ├── channel_language/
+│   │   ├── channel_language.csv
+│   │   └── README.md
+│   ├── charts/
+│   │   ├── community_detection/
+│   │   │   ├── community_size_distribution.png
+│   │   │   ├── degree_distribution.png
+│   │   │   ├── meta_graph.gexf
+│   │   │   ├── README.md
+│   │   │   ├── resolution_curve.png
+│   │   │   └── top_20_communities.png
+│   │   ├── community_diffusion_maps/
+│   │   │   ├── fig_community_map_2015.png
+│   │   │   ├── fig_community_map_2016.png
+│   │   │   ├── fig_community_map_2017.png
+│   │   │   ├── fig_community_map_2018.png
+│   │   │   ├── fig_community_map_2019.png
+│   │   │   ├── fig_community_map_2020.png
+│   │   │   ├── fig_community_map_2021.png
+│   │   │   ├── fig_community_map_2022.png
+│   │   │   ├── fig_community_map_2023.png
+│   │   │   ├── fig_community_map_2024.png
+│   │   │   ├── fig_community_map_global.png
+│   │   │   └── README.md
+│   │   └── language_analysis/
+│   │       ├── community_purity_hist.png
+│   │       ├── language_distribution.png
+│   │       ├── language_graph_structure.png
+│   │       ├── language_homophily.png
+│   │       ├── language_mixing_matrix.png
+│   │       └── README.md
+│   ├── communities/
+│   │   ├── communities.csv
+│   │   └── README.md
+│   ├── community_activity_by_year/
+│   │   ├── community_activity_by_year.csv
+│   │   └── README.md
+│   ├── community_language_purity/
+│   │   ├── community_language_purity.csv
+│   │   └── README.md
+│   ├── community_names/
+│   │   ├── community_names.csv
+│   │   └── README.md
+│   ├── community_sizes/
+│   │   ├── community_sizes.csv
+│   │   └── README.md
+│   ├── cross_community_edges_by_year/
+│   │   ├── cross_community_edges_by_year.csv
+│   │   └── README.md
+│   ├── language_assortativity/
+│   │   ├── language_assortativity.csv
+│   │   └── README.md
+│   ├── language_community_agreement/
+│   │   ├── language_community_agreement.csv
+│   │   └── README.md
+│   ├── language_community_contingency/
+│   │   ├── language_community_contingency.csv
+│   │   └── README.md
+│   ├── language_distribution/
+│   │   ├── language_distribution.csv
+│   │   └── README.md
+│   ├── language_graph_structure/
+│   │   ├── language_graph_structure.csv
+│   │   └── README.md
+│   ├── language_homophily/
+│   │   ├── language_homophily.csv
+│   │   └── README.md
+│   ├── language_mixing_matrix/
+│   │   ├── language_mixing_matrix.csv
+│   │   └── README.md
+│   ├── Aggregated_User_Interactions.csv
+│   ├── Channel_Language.csv
+│   ├── channel_to_channel_graph.csv
+│   ├── .gitignore
+│   ├── Message_Forwarding_Flows.csv
+│   ├── Source_Channel_Metadata.csv
+│   └── Temporal_Channel_Metadata.csv
+├── telescope_pipeline_files/
+│   ├── clean/
+│   │   ├── batch=1000015666_to_1054523330/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1054549314_to_1092663584/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1092691131_to_1124443753/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1124469578_to_1147333336/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1147336903_to_1180665618/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1180680018_to_1219762447/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1219766382_to_1255194806/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1255195746_to_1291104162/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1291116365_to_1325779356/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1325786124_to_1364416179/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1364421816_to_1397037295/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1397113490_to_1436310453/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1436320749_to_1469586346/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1469592192_to_1508140759/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1508149386_to_1568817860/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1568821876_to_1625726066/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1625754907_to_1677378798/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1677440310_to_1731205486/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1731206105_to_1762981965/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1762989759_to_1778345773/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1778346527_to_1792456646/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1792460600_to_1826619557/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1826634808_to_1877649970/  [27 entries exceeds filelimit, not opening dir]
+│   │   ├── batch=1877677892_to_1961731638/  [27 entries exceeds filelimit, not opening dir]
+│   │   └── batch=1961746451_to_2174838182/  [27 entries exceeds filelimit, not opening dir]
+│   ├── clean_dedup/  [98 entries exceeds filelimit, not opening dir]
+│   ├── clean_trial/
+│   │   └── batch=1625754907_to_1677378798/  [27 entries exceeds filelimit, not opening dir]
+│   ├── gold/
+│   │   ├── cascades/  [98 entries exceeds filelimit, not opening dir]
+│   │   ├── chains/  [34 entries exceeds filelimit, not opening dir]
+│   │   ├── channel_behavior/  [50 entries exceeds filelimit, not opening dir]
+│   │   ├── channel_hours/
+│   │   │   ├── part-00000-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet
+│   │   │   ├── .part-00000-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet
+│   │   │   ├── .part-00001-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet
+│   │   │   ├── .part-00002-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet.crc
+│   │   │   ├── part-00003-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet
+│   │   │   ├── .part-00003-f5e298bc-1ffc-4ddf-80c3-0f8a1aa5733c-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── channel_stats/
+│   │   │   ├── part-00000-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet
+│   │   │   ├── .part-00000-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet
+│   │   │   ├── .part-00001-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet
+│   │   │   ├── .part-00002-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet.crc
+│   │   │   ├── part-00003-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet
+│   │   │   ├── .part-00003-d112ebac-e1af-4662-bc6d-13f5ba720b32-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── channel_stats_csv/
+│   │   │   ├── part-00000-addf1be1-773e-4949-9cb8-cf9f5511ec6f-c000.csv
+│   │   │   ├── .part-00000-addf1be1-773e-4949-9cb8-cf9f5511ec6f-c000.csv.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── city_daily/
+│   │   │   ├── part-00000-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet
+│   │   │   ├── .part-00000-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet
+│   │   │   ├── .part-00001-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet
+│   │   │   ├── .part-00002-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet.crc
+│   │   │   ├── part-00003-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet
+│   │   │   ├── .part-00003-b8d5212c-4f24-4092-b6ee-97262e840012-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── city_daily_csv/
+│   │   │   ├── part-00000-3eefbdfd-c686-47f8-8234-35a9e0ed72d2-c000.csv
+│   │   │   ├── .part-00000-3eefbdfd-c686-47f8-8234-35a9e0ed72d2-c000.csv.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── city_hourly/
+│   │   │   ├── part-00000-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet
+│   │   │   ├── .part-00000-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet
+│   │   │   ├── .part-00001-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet
+│   │   │   ├── .part-00002-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet.crc
+│   │   │   ├── part-00003-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet
+│   │   │   ├── .part-00003-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet.crc
+│   │   │   ├── part-00004-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet
+│   │   │   ├── .part-00004-1993b327-52f4-4bdd-b3a6-c61023f33824-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── coordinated_pairs/
+│   │   │   ├── part-00000-204c85a7-971a-4b79-99da-e8a5bd3e6ee8-c000.snappy.parquet
+│   │   │   ├── .part-00000-204c85a7-971a-4b79-99da-e8a5bd3e6ee8-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-204c85a7-971a-4b79-99da-e8a5bd3e6ee8-c000.snappy.parquet
+│   │   │   ├── .part-00001-204c85a7-971a-4b79-99da-e8a5bd3e6ee8-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-204c85a7-971a-4b79-99da-e8a5bd3e6ee8-c000.snappy.parquet
+│   │   │   ├── .part-00002-204c85a7-971a-4b79-99da-e8a5bd3e6ee8-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── edges_monthly/
+│   │   │   ├── part-00000-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet
+│   │   │   ├── .part-00000-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet
+│   │   │   ├── .part-00001-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet
+│   │   │   ├── .part-00002-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet.crc
+│   │   │   ├── part-00003-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet
+│   │   │   ├── .part-00003-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet.crc
+│   │   │   ├── part-00004-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet
+│   │   │   ├── .part-00004-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet.crc
+│   │   │   ├── part-00005-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet
+│   │   │   ├── .part-00005-38a86caf-aa1a-4cef-89ca-97fc47731734-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── edges_monthly_csv/
+│   │   │   ├── part-00000-a6e6cf48-5ee0-4d7e-a3cc-762473457384-c000.csv
+│   │   │   ├── .part-00000-a6e6cf48-5ee0-4d7e-a3cc-762473457384-c000.csv.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   └── forward_speed_monthly/
+│   │       ├── part-00000-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet
+│   │       ├── .part-00000-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet.crc
+│   │       ├── part-00001-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet
+│   │       ├── .part-00001-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet.crc
+│   │       ├── part-00002-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet
+│   │       ├── .part-00002-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet.crc
+│   │       ├── part-00003-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet
+│   │       ├── .part-00003-d4472c8a-3bfb-495e-9f6b-5d48cb57c9ef-c000.snappy.parquet.crc
+│   │       ├── _SUCCESS
+│   │       └── ._SUCCESS.crc
+│   ├── gold_with_duplicates/
+│   │   ├── chains/  [34 entries exceeds filelimit, not opening dir]
+│   │   ├── channel_stats/
+│   │   │   ├── part-00000-dddc3ebd-bc62-448d-b095-285a6b21da54-c000.snappy.parquet
+│   │   │   ├── .part-00000-dddc3ebd-bc62-448d-b095-285a6b21da54-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-dddc3ebd-bc62-448d-b095-285a6b21da54-c000.snappy.parquet
+│   │   │   ├── .part-00001-dddc3ebd-bc62-448d-b095-285a6b21da54-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-dddc3ebd-bc62-448d-b095-285a6b21da54-c000.snappy.parquet
+│   │   │   ├── .part-00002-dddc3ebd-bc62-448d-b095-285a6b21da54-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── channel_stats_csv/
+│   │   │   ├── part-00000-25a69468-ffc0-4733-959c-34a45807a51e-c000.csv
+│   │   │   ├── .part-00000-25a69468-ffc0-4733-959c-34a45807a51e-c000.csv.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   ├── edges_monthly/
+│   │   │   ├── part-00000-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet
+│   │   │   ├── .part-00000-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet.crc
+│   │   │   ├── part-00001-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet
+│   │   │   ├── .part-00001-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet.crc
+│   │   │   ├── part-00002-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet
+│   │   │   ├── .part-00002-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet.crc
+│   │   │   ├── part-00003-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet
+│   │   │   ├── .part-00003-ce47968d-efd4-4215-9173-03406ca5d781-c000.snappy.parquet.crc
+│   │   │   ├── _SUCCESS
+│   │   │   └── ._SUCCESS.crc
+│   │   └── edges_monthly_csv/
+│   │       ├── part-00000-3cdc0bfc-517f-4fc3-8ebe-df27587fe83c-c000.csv
+│   │       ├── .part-00000-3cdc0bfc-517f-4fc3-8ebe-df27587fe83c-c000.csv.crc
+│   │       ├── _SUCCESS
+│   │       └── ._SUCCESS.crc
+│   ├── clean_log.csv
+│   ├── clean_trial_log.csv
+│   ├── dedup_log.csv
+│   └── dedup_report.csv
+├── .gitignore
+├── requirements.txt
+└── STRUCTURE_PROJET.txt
+
+158 directories, 223 files

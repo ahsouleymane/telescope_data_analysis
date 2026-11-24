@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+**/__pycache__
+**/*.pyc
+telescope_pipeline_files
+telescope_raw
+spark_tmp
+bigdata_pipeline/analysis
+*.bak
+*.zip
+telescope_files
+code

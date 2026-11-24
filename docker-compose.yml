@@ -1,0 +1,38 @@
+# TeleScope v2. Commands (from the project root):  make build | make shell | make pipeline | make app ...
+# Folders on the host (set them in .env, see .env.example):
+#   RAW_DIR      raw messages (JSONL / ZIP), mounted READ-ONLY on /raw
+#   SPARK_TMP    Spark shuffle files, keep it on an internal disk with free space
+x-telescope: &telescope
+  image: telescope:v2
+  build:
+    context: .
+    args:
+      PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
+      UID: ${HOST_UID:-1000}
+      GID: ${HOST_GID:-1000}
+  working_dir: /work
+  environment:
+    TELESCOPE_CORES: ${TELESCOPE_CORES:-3}
+    TELESCOPE_SPARK_MEMORY: ${TELESCOPE_SPARK_MEMORY:-4g}
+    TELESCOPE_SHUFFLE_PARTITIONS: ${TELESCOPE_SHUFFLE_PARTITIONS:-48}
+    TELESCOPE_SPARK_TMP: /spark_tmp
+
+services:
+  telescope:                      # interactive shell and every pipeline / analysis step
+    <<: *telescope
+    volumes:
+      - .:/work
+      - ${RAW_DIR:-./telescope_raw}:/raw:ro
+      - ${SPARK_TMP:-./spark_tmp}:/spark_tmp
+
+  app:                            # Streamlit report: make app  ->  http://localhost:8501
+    <<: *telescope
+    profiles: ["app"]
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/work:ro
+    command: >
+      streamlit run bigdata_pipeline/analysis/app/telescope_app.py
+      --server.address 0.0.0.0 --server.port 8501 --server.headless true
+      --browser.gatherUsageStats false

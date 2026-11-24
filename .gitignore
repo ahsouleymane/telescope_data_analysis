@@ -8,3 +8,8 @@ telescope_files/cascade_community_timeline/cascade_community_timeline.csv
 .venv/
 telescope_pipeline_files/
 bigdata_pipeline/analysis/__pycache__/
+
+.env
+spark_tmp/
+telescope_raw/
+ENVIRONMENT.txt
