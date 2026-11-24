@@ -54,7 +54,7 @@ Layout of the repository:
 | `bigdata_pipeline/airflow/dags/` | the Airflow DAG (optional) |
 | `telescope_files/` | pre-aggregated files of the dataset (inputs of the analyses) |
 | `telescope_pipeline_files/` | pipeline outputs: `clean/`, `clean_dedup/`, `gold/` (not versioned) |
-| root | `Dockerfile`, `docker-compose.yml`, `Makefile`, `requirements.txt`, `requirements.lock`, `.env` |
+| root | `Dockerfile`, `docker-compose.yml`, `Makefile`, `requirements.txt`, `requirements.lock`, `.env.example` |
 
 ## Prerequisites by operating system
 
@@ -280,22 +280,32 @@ the same cleaned data is copied to each machine and everything after it is recom
 The image fixes the Python hash seed, the time zone (UTC), the number of cores and of shuffle partitions,
 and `requirements.lock` fixes the library versions.
 
-```bash
-# on each machine, with the same telescope_pipeline_files/clean/ and telescope_files/
-make digest-clean RUN_ID=machine1          # fingerprint of the INPUT: it must be identical on both machines
-make from-clean    && make digest RUN_ID=machine1_gold      # jobs 1b, 2, 3, 4
-make theme1 theme2 theme3 && make digest RUN_ID=machine1_themes123
-make theme4        && make digest RUN_ID=machine1_theme4
-make theme5        && make digest RUN_ID=machine1_theme5
-# (or `make all-from-clean` for everything, then one `make digest`)
+Run the same commands on each machine, with the same `telescope_pipeline_files/clean/` and `telescope_files/`.
+`RUN_ID` is only a name for the fingerprint file (`digest_<RUN_ID>.tsv`): use `machine1` on the first machine and
+`machine2` on the second. A fingerprint is saved after each stage, to see where a difference appears.
 
-# after copying the .tsv files of the other machine next to these ones:
-make compare A=machine1_clean B=machine2_clean       # same input?
-make compare A=machine1_gold  B=machine2_gold        # same gold tables?
+```bash
+make digest-clean RUN_ID=machine1                     # fingerprint of the INPUT (cleaned data) -> digest_clean_machine1.tsv
+make from-clean && make digest RUN_ID=machine1_gold   # jobs 1b, 2, 3, 4, then fingerprint of the tables
+make theme1 theme2 theme3 && make digest RUN_ID=machine1_themes123
+make theme4 && make digest RUN_ID=machine1_theme4
+make theme5 && make digest RUN_ID=machine1_theme5
+```
+(`make all-from-clean` runs all the stages in one go, then one `make digest`: simpler, but the difference is not localised.)
+
+Copy the `digest_*.tsv` files of one machine next to those of the other, then compare stage by stage:
+
+```bash
+make compare A=clean_machine1       B=clean_machine2        # same input data?
+make compare A=machine1_gold        B=machine2_gold         # same gold tables?
+make compare A=machine1_themes123   B=machine2_themes123
+make compare A=machine1_theme4      B=machine2_theme4
+make compare A=machine1_theme5      B=machine2_theme5
 ```
 
-`digest-clean` writes `digest_clean_<RUN_ID>.tsv`; compare these two files directly with `make compare A=clean_machine1 B=clean_machine2`.
 If the input fingerprints differ, the data copy is not the same and nothing after it can be compared.
+The first stage that differs shows where to look. The last line of `make compare` gives the number of identical and different tables.
+
 `results_digest.py` ignores the order of the rows and the names of the Spark `part-*` files, but it detects
 any change of value, down to the last decimal. Images, logs and run reports are ignored.
 Differences can still come from the order of floating-point sums in Spark or from ties in the deduplication.
