@@ -54,7 +54,7 @@ Layout of the repository:
 | `bigdata_pipeline/airflow/dags/` | the Airflow DAG (optional) |
 | `telescope_files/` | pre-aggregated files of the dataset (inputs of the analyses) |
 | `telescope_pipeline_files/` | pipeline outputs: `clean/`, `clean_dedup/`, `gold/` (not versioned) |
-| root | `Dockerfile`, `docker-compose.yml`, `Makefile`, `requirements.txt`, `requirements.lock`, `.env.example` |
+| root | `Dockerfile`, `docker-compose.yml`, `Makefile`, `requirements.txt`, `requirements.lock`, `.env` |
 
 ## Prerequisites by operating system
 
