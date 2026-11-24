@@ -13,14 +13,15 @@ internal disk. Spark runs in LOCAL mode (one JVM, no cluster).
 1. [Overview](#overview)
 2. [Prerequisites by operating system](#prerequisites-by-operating-system)
 3. [Environment (Docker)](#environment-docker)
-4. [Run everything: one command per step](#run-everything-one-command-per-step)
-5. [Spark pipeline (jobs 1-6)](#spark-pipeline-jobs-1-6)
-6. [Analyses by theme](#analyses-by-theme)
-7. [Report application (Streamlit)](#report-application-streamlit)
-8. [Orchestration (Airflow)](#orchestration-airflow)
-9. [Check that results are reproducible](#check-that-results-are-reproducible)
-10. [Install without Docker](#install-without-docker)
-11. [Things to know](#things-to-know)
+4. [Get the project and run it on a new machine](#get-the-project-and-run-it-on-a-new-machine)
+5. [Run everything: one command per step](#run-everything-one-command-per-step)
+6. [Spark pipeline (jobs 1-6)](#spark-pipeline-jobs-1-6)
+7. [Analyses by theme](#analyses-by-theme)
+8. [Report application (Streamlit)](#report-application-streamlit)
+9. [Orchestration (Airflow)](#orchestration-airflow)
+10. [Check that results are reproducible](#check-that-results-are-reproducible)
+11. [Install without Docker](#install-without-docker)
+12. [Things to know](#things-to-know)
 
 ## Overview
 
@@ -155,6 +156,37 @@ Commit `requirements.lock`: with it, `make build` installs the same versions on 
 To move the image to another machine without Internet:
 `docker save telescope:v2 | gzip > telescope_v2.tar.gz`, then `gunzip -c telescope_v2.tar.gz | docker load`.
 The project folder and the data must be copied too. If the user id differs, run `make build` there.
+
+## Get the project and run it on a new machine
+
+1. **Install Docker** (see "Prerequisites by operating system"), and give your user access to it.
+2. **Get the project**:
+   ```bash
+   git clone <repository url> telescope_data_analysis
+   cd telescope_data_analysis && git checkout bigdata-pipeline
+   ```
+3. **Put the input data in the project folder**, at the same place as on the first machine. Git does not provide them:
+   ```
+   telescope_data_analysis/
+   |-- telescope_files/                       copy (Source_Channel_Metadata.csv, Channel_Language.csv ...)
+   `-- telescope_pipeline_files/clean/        copy (the cleaned data, input of `make from-clean`)
+   ```
+   Copy them with `tar`, `scp` or `rsync`, for example `tar cf inputs.tar telescope_files telescope_pipeline_files/clean`,
+   then `tar xf inputs.tar` in the new folder. The raw data (345 GB) are only needed for `make pipeline` (job 1).
+4. **Create the settings**: `cp .env.example .env`, then edit `RAW_DIR` (any existing folder if you start from the cleaned data),
+   `SPARK_TMP` (internal disk, a few tens of GB free). Keep `TELESCOPE_CORES` and `TELESCOPE_SPARK_MEMORY` identical on all machines.
+5. **Get the image**, one of two ways:
+   - with Internet: `make build` (about 10 minutes; `requirements.lock` gives the same library versions as on the first machine);
+   - without Internet: on the first machine `docker save telescope:v2 | gzip > telescope_v2.tar.gz` and `sha256sum telescope_v2.tar.gz > telescope_v2.tar.gz.sha256`;
+     on the new one `sha256sum -c telescope_v2.tar.gz.sha256` then `gunzip -c telescope_v2.tar.gz | docker load` (do not run `make build`).
+     If your user id differs from the first machine (`id -u`), use `make build` instead: the image holds a user with the id given at build time.
+6. **Check, then run**:
+   ```bash
+   make shell            # inside: java -version; python3 --version; ls /raw | head; exit
+   make test && make selftest
+   make digest-clean RUN_ID=machine2      # fingerprint of the input data
+   make from-clean                        # then the themes, see the reproducibility section
+   ```
 
 ## Run everything: one command per step
 
