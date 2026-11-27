@@ -52,8 +52,8 @@ selftest:  ## selftest of every analysis script that has one
 	  f=$$(find bigdata_pipeline -name "$$s*.py" | sort | head -1); echo "== $$s ($$f)"; $(RUN) $(PY) $$f --selftest || exit 1; done
 
 # ---------------------------------------------------------------- Spark pipeline (raw -> clean -> gold)
-pipeline:  ## jobs 1 to 4: raw (/raw) -> clean, clean_dedup, chains, edges, stats
-	$(RUN) bash $(call script,run_pipeline.sh) /raw $(OUT)
+pipeline:  ## jobs 1 to 4 from the RAW messages (needs RAW_DIR in .env; not needed for from-clean)
+	docker compose -f docker-compose.yml -f docker-compose.raw.yml run --rm telescope bash $(call script,run_pipeline.sh) /raw $(OUT)
 
 from-clean:  ## jobs 1b, 2, 3, 4 starting from the CLEANED data in $(OUT)/clean (no raw data needed)
 	$(RUN) $(PY) $(call script,job1b_dedup*.py) --out $(OUT)

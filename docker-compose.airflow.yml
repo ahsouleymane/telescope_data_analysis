@@ -16,7 +16,7 @@ services:
       _AIRFLOW_STANDALONE_USERNAME: admin
       # host paths, used by the DAG to mount the same folders in the task containers
       PROJECT_DIR: ${PROJECT_DIR:?use make airflow-up}
-      RAW_DIR: ${RAW_DIR:-./telescope_raw}
+      RAW_DIR: ${RAW_DIR:-}              # empty = no raw data mounted (cleaned Parquet only)
       SPARK_TMP: ${SPARK_TMP:-./spark_tmp}
       HOST_UID: ${HOST_UID:-1000}
       HOST_GID: ${HOST_GID:-1000}

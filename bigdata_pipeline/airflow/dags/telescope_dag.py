@@ -11,7 +11,7 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
 PROJECT = os.environ["PROJECT_DIR"]          # absolute host paths: Docker mounts them from the host
-RAW = os.path.abspath(os.path.join(PROJECT, os.environ.get("RAW_DIR", "telescope_raw")))
+RAW_DIR = os.environ.get("RAW_DIR")          # optional: only needed to rerun job 1 from the raw messages
 TMP = os.path.abspath(os.path.join(PROJECT, os.environ.get("SPARK_TMP", "spark_tmp")))
 IMAGE = "telescope:v2"
 USER = f"{os.environ.get('HOST_UID', '1000')}:{os.environ.get('HOST_GID', '1000')}"
@@ -31,8 +31,8 @@ def step(dag, target):
         docker_url="unix://var/run/docker.sock",
         mount_tmp_dir=False,
         mounts=[Mount("/work", PROJECT, type="bind"),
-                Mount("/raw", RAW, type="bind", read_only=True),
-                Mount("/spark_tmp", TMP, type="bind")],
+                Mount("/spark_tmp", TMP, type="bind")]
+               + ([Mount("/raw", os.path.abspath(os.path.join(PROJECT, RAW_DIR)), type="bind", read_only=True)] if RAW_DIR else []),
         environment={k: os.environ[k] for k in ("TELESCOPE_CORES", "TELESCOPE_SPARK_MEMORY") if k in os.environ},
         pool=POOL,
         dag=dag,

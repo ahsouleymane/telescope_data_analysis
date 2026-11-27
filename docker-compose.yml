@@ -1,6 +1,6 @@
 # TeleScope v2. Commands (from the project root):  make build | make shell | make pipeline | make app ...
 # Folders on the host (set them in .env, see .env.example):
-#   RAW_DIR      raw messages (JSONL / ZIP), mounted READ-ONLY on /raw
+#   RAW_DIR      raw messages: NOT needed (the work starts from the cleaned Parquet); only `make pipeline` uses it, via docker-compose.raw.yml
 #   SPARK_TMP    Spark shuffle files, keep it on an internal disk with free space
 x-telescope: &telescope
   image: telescope:v2
@@ -22,7 +22,6 @@ services:
     <<: *telescope
     volumes:
       - .:/work
-      - ${RAW_DIR:-./telescope_raw}:/raw:ro
       - ${SPARK_TMP:-./spark_tmp}:/spark_tmp
 
   app:                            # Streamlit report: make app  ->  http://localhost:8501

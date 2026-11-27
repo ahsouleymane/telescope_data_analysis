@@ -1,0 +1,6 @@
+# Optional add-on: mounts the raw messages (JSONL / ZIP) read-only on /raw. Used only by `make pipeline` (job 1).
+# Set RAW_DIR in .env first.
+services:
+  telescope:
+    volumes:
+      - ${RAW_DIR:?set RAW_DIR in .env to run job 1}:/raw:ro
